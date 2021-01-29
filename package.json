@@ -1,9 +1,0 @@
-{
-  "name": "RedCap",
-  "version": "0.01",
-  "description": "Redcap is a helper-bot for discord Ars Magica games.",
-  "main": "main.py",
-  "license": "GNU General Public Licence v3.0"
-}
-  "dependencies": {
-}
