@@ -20,6 +20,9 @@ style = 'blue'
 
 #bot.load_extension('DropboxInt')
 bot.load_extension('DiceRolls')
+bot.load_extension('Tools')
+bot.load_extension('Grogs')
+#bot.load_extension('Character')
 
 @bot.event
 async def on_ready():

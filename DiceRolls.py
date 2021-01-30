@@ -5,6 +5,9 @@ import math
 import DiscordStyle
 import Exclamations
 from discord.ext import commands
+from pathlib import Path
+import pickle
+from Character import Character
 style = 'blue'
 
 
@@ -15,9 +18,21 @@ class DiceRolls(commands.Cog):
 
 
     @commands.command(name='simple', help='Rolls a simple die', aliases=['s'])
-    async def roll_simp(self, ctx):
+    async def roll_simple(self, ctx,*args):
         print('Simple Die Rolled!')
-        await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(random.randint(1,10)) + '} ', style)))
+        p = Path.cwd()/'grogs'
+        files = p.glob('*')
+        grogs = []
+        for f in files:
+            grogs.append(f.stem)
+        choosenGrog = list(set(grogs) & set(args))
+        name = choosenGrog[0]
+        infile = open(Path.cwd()/'grogs'/name,'rb')
+        grog=pickle.load(infile)
+        addition = grog.characteristics[list(set(args)&set(grog.charList))[0]]
+        await ctx.send(DiscordStyle.style(name + ' rolls a simple die and adds their ' + list(set(args)&set(grog.charList))[0],style))
+        rando = random.randint(1,10)
+        await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '} + ' + str(addition) + ' equaling ' + str(rando + addition), style)))
 
     @commands.command(name='stress', help='Rolls a stress die', aliases=['st'])
     async def roll_stress(self, ctx):
