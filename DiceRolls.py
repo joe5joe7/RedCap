@@ -40,7 +40,7 @@ class DiceRolls(commands.Cog):
             except:
                 char = 'nothing'
                 addition = 0
-            await ctx.send(DiscordStyle.style(name + ' rolls a simple die and adds their ' + char)
+            await ctx.send(DiscordStyle.style(name + ' rolls a simple die and adds their ' + char))
             await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '} + ' + str(addition) + ' equaling ' + str(rando + addition), style)))
         else:
             await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '}')))
