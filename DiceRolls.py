@@ -34,8 +34,13 @@ class DiceRolls(commands.Cog):
             name = choosenGrog[0]
             infile = open(Path.cwd()/'grogs'/name,'rb')
             grog=pickle.load(infile)
-            addition = grog.characteristics[list(set(args)&set(grog.charList))[0]]
-            await ctx.send(DiscordStyle.style(name + ' rolls a simple die and adds their ' + list(set(args)&set(grog.charList))[0],style))
+            try:
+                char = list(set(args)&set(grog.charList))[0]
+                addition = grog.characteristics[char]
+            except:
+                char = 'nothing'
+                addition = 0
+            await ctx.send(DiscordStyle.style(name + ' rolls a simple die and adds their ' + char)
             await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '} + ' + str(addition) + ' equaling ' + str(rando + addition), style)))
         else:
             await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '}')))
