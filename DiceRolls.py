@@ -25,14 +25,20 @@ class DiceRolls(commands.Cog):
         grogs = []
         for f in files:
             grogs.append(f.stem)
-        choosenGrog = list(set(grogs) & set(args))
-        name = choosenGrog[0]
-        infile = open(Path.cwd()/'grogs'/name,'rb')
-        grog=pickle.load(infile)
-        addition = grog.characteristics[list(set(args)&set(grog.charList))[0]]
-        await ctx.send(DiscordStyle.style(name + ' rolls a simple die and adds their ' + list(set(args)&set(grog.charList))[0],style))
+        try:
+            choosenGrog = list(set(grogs) & set(args))
+        except:
+            choosenGrog = []
         rando = random.randint(1,10)
-        await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '} + ' + str(addition) + ' equaling ' + str(rando + addition), style)))
+        if choosenGrog != []:
+            name = choosenGrog[0]
+            infile = open(Path.cwd()/'grogs'/name,'rb')
+            grog=pickle.load(infile)
+            addition = grog.characteristics[list(set(args)&set(grog.charList))[0]]
+            await ctx.send(DiscordStyle.style(name + ' rolls a simple die and adds their ' + list(set(args)&set(grog.charList))[0],style))
+            await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '} + ' + str(addition) + ' equaling ' + str(rando + addition), style)))
+        else:
+            await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '}')))
 
     @commands.command(name='stress', help='Rolls a stress die', aliases=['st'])
     async def roll_stress(self, ctx):
