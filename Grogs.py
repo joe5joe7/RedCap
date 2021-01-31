@@ -30,20 +30,15 @@ class Grog(commands.Cog):
         grog=Character(name)
         grog.genStats(*focus)
         await ctx.send(DiscordStyle.style(grog.display(),self.style))
-        outfile=open(Path.cwd()/'grogs'/name,'wb')
-        pickle.dump(grog,outfile)
-        outfile.close()
+        grog.save('tg')
 
     @commands.command(name='loadGrog',help='loads a previously generated grog.')
     async def loadGrog(self,ctx,name: str):
         print('attempting to load ' + name)
-        print('using path ' + str(Path.cwd()/'grogs'/name))
-        infile = open(Path.cwd()/'grogs'/name,'rb')
-        grog=pickle.load(infile)
-        print('successfully unpickled')
-        infile.close()
-        print(grog.display())
-        await ctx.send(DiscordStyle.style(grog.display(),self.style))
+        temp = Character('temp')
+        temp.load(name)
+        print(temp.display())
+        await ctx.send(DiscordStyle.style(temp.display(),self.style))
 
 
 def setup(bot):

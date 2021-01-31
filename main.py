@@ -5,6 +5,7 @@ import math
 import DiscordStyle
 import Exclamations
 from dotenv import load_dotenv
+from pathlib import Path
 
 # 1
 from discord.ext import commands
@@ -27,6 +28,7 @@ bot.load_extension('Grogs')
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
+
 
 @bot.event
 async def on_command_error(ctx, error):
