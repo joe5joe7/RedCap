@@ -1,4 +1,5 @@
 from Character import Character
+from Character import Ability
 from discord.ext import commands
 import DiscordStyle
 
@@ -16,6 +17,18 @@ class Tools(commands.Cog):
         #print(*args)
         temp.genStats(*args)
         await ctx.send(DiscordStyle.style(temp.display(),self.style))
+
+    @commands.command(name='abilityList',help='lists all abilities in the game')
+    async def abilityList(self,ctx):
+        a = Ability('charm')
+        print(a.availableAbilities())
+        await ctx.send(DiscordStyle.style(a.availableAbilities(),self.style))
+
+    @commands.command(name='abilitySum',help='gives a summary of any ability')
+    async def abilitySum(self,ctx,*args: str):
+        print(''.join([str(elem) for elem in args]))
+        a = Ability(''.join([str(elem) for elem in args]))
+        await ctx.send(DiscordStyle.style(a.summary(),self.style))
 
 def setup(bot):
     bot.add_cog(Tools(bot))

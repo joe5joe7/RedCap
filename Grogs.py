@@ -29,6 +29,7 @@ class Grog(commands.Cog):
         name=names.get_first_name()
         grog=Character(name)
         grog.genStats(*focus)
+        grog.genAbilities(200)
         await ctx.send(DiscordStyle.style(grog.display(),self.style))
         grog.save('tg')
 

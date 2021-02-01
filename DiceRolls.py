@@ -7,6 +7,7 @@ import Exclamations
 from discord.ext import commands
 from pathlib import Path
 import pickle
+import Character
 from Character import Character
 style = 'blue'
 
@@ -16,29 +17,46 @@ class DiceRolls(commands.Cog):
       self.bot = bot
       self.__last_member = None
 
+    def loadChar(self,*args):
+        roller = Character()
+        print(args)
+        for x in (args):
+            try:
+                print('attempting to load grog ' + str(x) + ' at ' + str(list(Path.cwd().glob('**/'+str(x)))[0]))
+                roller.load(x)
+                return roller
+            except:
+                None
+        return roller
+
+
 
     @commands.command(name='simple', help='Rolls a simple die', aliases=['s'])
     async def roll_simple(self, ctx,*args):
-        #print('Simple Die Rolled!')
-        roller = Character()
-        for x in set(args):
-            try:
-                #print('attempting to load grog ' + str(x) + ' at ' + str(list(Path.cwd().glob('**/'+str(x)))[0]))
-                roller.load(x)
-                #print(str(x) + ' loaded!')
-            except:
-                None
+        print('Simple Die Rolled!')
+        roller = self.loadChar(*args)
         rando = random.randint(1,10)
+        print('random number generated, ' + str(rando))
         if roller.name != 'default':
             try:
                 char = list(set(args)&set(roller.charList))[0]
                 addition = roller.characteristics[char]
             except:
-                char = 'nothing'
+                char = '*no characteristic entered*'
                 addition = 0
-            await ctx.send(DiscordStyle.style(roller.name + ' rolls a simple die and adds their ' + char))
+            try:
+                print(set(args))
+                print(roller.referenceAbility.abilityList())
+                print(list(set(args)&set(roller.referenceAbility.abilityList()))[0])
+                ability = list(set(args)&set(roller.referenceAbility.abilityList()))[0]
+                addition += roller.abilities[ability]
+            except:
+                ability = '*no ability entered*'
+
+            await ctx.send(DiscordStyle.style(roller.name + ' rolls a simple die, adds their ' + char + ' and their ' + ability))
             await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '} + ' + str(addition) + ' equaling ' + str(rando + addition), style)))
         else:
+            print('sending result to discord')
             await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '}')))
 
     @commands.command(name='stress', help='Rolls a stress die', aliases=['st'])
