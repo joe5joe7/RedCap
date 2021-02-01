@@ -40,20 +40,19 @@ class DiceRolls(commands.Cog):
         if roller.name != 'default':
             try:
                 char = list(set(args)&set(roller.charList))[0]
-                addition = roller.characteristics[char]
+                charadd = roller.characteristics[char]
+                addition = charadd
             except:
                 char = '*no characteristic entered*'
                 addition = 0
             try:
-                print(set(args))
-                print(roller.referenceAbility.abilityList())
-                print(list(set(args)&set(roller.referenceAbility.abilityList()))[0])
                 ability = list(set(args)&set(roller.referenceAbility.abilityList()))[0]
-                addition += roller.abilities[ability]
+                abiadd = roller.abilities[ability].score
+                addition += abiadd
             except:
                 ability = '*no ability entered*'
 
-            await ctx.send(DiscordStyle.style(roller.name + ' rolls a simple die, adds their ' + char + ' and their ' + ability))
+            await ctx.send(DiscordStyle.style(roller.name + ' rolls a simple die, adds their ' + char + ' of ' + str(charadd) + ' and their ' + ability + ' of ' + str(abiadd)))
             await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '} + ' + str(addition) + ' equaling ' + str(rando + addition), style)))
         else:
             print('sending result to discord')
@@ -61,23 +60,26 @@ class DiceRolls(commands.Cog):
 
     @commands.command(name='stress', help='Rolls a stress die', aliases=['st'])
     async def roll_stress(self, ctx,*args):
-        roller = Character()
-        for x in set(args):
-            try:
-                roller.load(x)
-            except:
-                None
-        result = random.randint(0,9)
+        roller = self.loadChar(*args)
+        result = random.randint(1,10)
         if roller.name != 'default':
             try:
                 char = list(set(args)&set(roller.charList))[0]
-                addition = roller.characteristics[char]
+                charadd = roller.characteristics[char]
+                addition = charadd
             except:
-                char = 'nothing'
+                char = '*no characteristic entered*'
                 addition = 0
+            try:
+                ability = list(set(args)&set(roller.referenceAbility.abilityList()))[0]
+                abiadd = roller.abilities[ability].score
+                addition += abiadd
+            except:
+                ability = '*no ability entered*'
+
         if (result != 0 and result != 1):
             if roller.name != 'default':
-                await ctx.send(DiscordStyle.style((roller.name + ' rolled a {' + str(result) + '} and added their ' + char + ' of ' + str(addition) + ' for a result of ' + str(result + addition)), style))
+                await ctx.send(DiscordStyle.style((roller.name + ' rolled a {' + str(result) + '} and added their ' + char + ' of ' + str(charadd) + ' and their ' + ability + ' of ' +str(abiadd) + ' for a result of ' + str(result + addition)), style))
             else:
                 await ctx.send(DiscordStyle.style(('You rolled a {' + str(result) + '} '), style))
         elif result == 1:
@@ -93,14 +95,14 @@ class DiceRolls(commands.Cog):
                     power = ( power + power )
                     result = (random.randint(1,10))
                 if roller.name != 'default':
-                    await ctx.send(DiscordStyle.style((roller.name + '\'s die exploded ' + str(int(math.log(power,2))) + ' times! Resulting in a multiplier of ' + str(power) + '.\n' + roller.name + '\'s final die roll was {' + str(result) + '} equaling a total of ' + str(result*power) + '!\n' + roller.name + ' then adds their ' + char + ' of ' + str(addition) + ' for a total result of ' + str(result*power + addition)), style))
+                    await ctx.send(DiscordStyle.style((roller.name + '\'s die exploded ' + str(int(math.log(power,2))) + ' times! Resulting in a multiplier of ' + str(power) + '.\n' + roller.name + '\'s final die roll was {' + str(result) + '} equaling a total of ' + str(result*power) + '!\n' + roller.name + ' then adds their ' + char + ' of ' + str(charadd) + ' and their ' + ability + ' of ' +str(abiadd) + ' for a result of ' + str(result*power + addition)), style))
                 else:
                     await ctx.send(DiscordStyle.style(('Your die exploded ' + str(int(math.log(power,2))) + ' times! Resulting in a multiplier of ' + str(power) + '.\nYour final die roll was {' + str(result) + '} equaling a total of ' + str(result*power) + '!\n'), style))
                 if (result*power >= 20):
                     await ctx.send(Exclamations.surprise())
             else:
                 if roller.name != 'default':
-                    await ctx.send(DiscordStyle.style((roller.name + '\'s second roll was a {' + str(result) + '} which doubles to ' + str(result*power) + '!\n'+ roller.name + ' then adds their ' + char + ' of ' + str(addition) + ' for a total result of ' + str(result*power + addition)), style))
+                    await ctx.send(DiscordStyle.style((roller.name + '\'s second roll was a {' + str(result) + '} which doubles to ' + str(result*power) + '!\n'+ roller.name + ' then adds their ' + char + ' of ' + str(charadd) + ' and their ' + ability + ' of ' +str(abiadd) + ' for a result of ' + str(result*power + addition)), style))
                 else:
                     await ctx.send(DiscordStyle.style(('Your second roll was a {' + str(result) + '} which doubles to ' + str(result*power) + '!'), style))
                 if (result*power >= 20):

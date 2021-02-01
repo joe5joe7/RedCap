@@ -303,9 +303,12 @@ class Character():
 		print(abilityF)
 		for x in list(abilityF.glob('*')):
 			try:
-				file = open(x)
+				file = open(x,'rb')
 				print('opened' + str(x))
-				abilityTemp = pickle.load(file)
+				try:
+					abilityTemp = pickle.load(file)
+				except Exception as e:
+					print(e)
 				print('unpickled')
 				self.abilities[abilityTemp.name]=abilityTemp
 				print('abilityLoaded')
