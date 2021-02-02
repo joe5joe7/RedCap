@@ -148,7 +148,7 @@ class Character():
 			-3: -6, -2: -3, -1: -1, 0: 0, 1: 1, 2: 3, 3: 6
 		}
 		language = Ability('LIVING LANGUAGE')
-		print(language.name)
+	#	print(language.name)
 		self.abilities = {language.name: language}
 
 
@@ -203,8 +203,8 @@ class Character():
 			change = random.randint(1,int(xp/2)+1)
 			xp -= change
 			randAbility = random.choice(list(self.abilities['(LIVING LANGUAGE)'].abilitiesLib.values()))
-			print(randAbility)
-			print('Applying ' + str(xp) + ' xp to ' + randAbility['name'])
+		#	print(randAbility)
+		#	print('Applying ' + str(xp) + ' xp to ' + randAbility['name'])
 			self.abilities[randAbility['name']] = Ability(randAbility['name'])
 			self.abilities[randAbility['name']].addXp(change)
 
@@ -213,7 +213,15 @@ class Character():
 			print(x.summary())
 			print('\n \n \n')
 
-
+	def addAbility(self,name):
+		tempAbi = Ability(name)
+		try:
+			self.abilities[tempAbi.name]
+			return('ability already exists')
+		except:
+			None
+		self.abilities[tempAbi.name] = tempAbi
+		return(tempAbi.name)
 
 
 	def save(self, type='g'):
@@ -270,27 +278,27 @@ class Character():
 		for x in self.abilities:
 			p = self.filepaths[type]/('abi.' + self.name)
 			try:
-				print(p)
+			#	print(p)
 				p.mkdir(parents=True,exist_ok=True)
-				print('made directory')
+			#	print('made directory')
 			except:
 				None
 			saveFile = open(self.filepaths[type]/('abi.' + self.name)/x,'wb')
 			pickle.dump(self.abilities[x],saveFile)
-		print('Character saved')
+		#print('Character saved')
 		return('Character saved')
 
 
 	# print(self.characteristics)
 	def load(self,name):
-		print('attempting to load ' + name)
-		print('using path ' + str(Path.cwd() / 'characters' / '**' / name))
+	#	print('attempting to load ' + name)
+	#	print('using path ' + str(Path.cwd() / 'characters' / '**' / name))
 		#p = list(Path.cwd().glob('**/'+name))[0]
 		infile = open(list(Path.cwd().glob('**/'+name))[0], 'rb')
 		char = pickle.load(infile)
 		abilityF = Path(list(Path.cwd().glob('**/'+name))[0]).parent/('abi.'+char.name)
 		infile.close()
-		print('successfully unpickled')
+	#	print('successfully unpickled')
 		try:
 			char.isCharacter()
 		except:
@@ -299,19 +307,19 @@ class Character():
 		self.name = char.name
 		self.characteristics = char.characteristics
 		self.identifier = char.identifier
-		print('loading abilities')
-		print(abilityF)
+	#	print('loading abilities')
+		#print(abilityF)
 		for x in list(abilityF.glob('*')):
 			try:
 				file = open(x,'rb')
-				print('opened' + str(x))
+			#	print('opened' + str(x))
 				try:
 					abilityTemp = pickle.load(file)
 				except Exception as e:
 					print(e)
-				print('unpickled')
+		#		print('unpickled')
 				self.abilities[abilityTemp.name]=abilityTemp
-				print('abilityLoaded')
+		#		print('abilityLoaded')
 			except:
 				None
 

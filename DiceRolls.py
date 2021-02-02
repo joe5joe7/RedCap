@@ -9,6 +9,7 @@ from pathlib import Path
 import pickle
 import Character
 from Character import Character
+import Levenshtein
 style = 'blue'
 
 
@@ -19,10 +20,10 @@ class DiceRolls(commands.Cog):
 
     def loadChar(self,*args):
         roller = Character()
-        print(args)
+     #   print(args)
         for x in (args):
             try:
-                print('attempting to load grog ' + str(x) + ' at ' + str(list(Path.cwd().glob('**/'+str(x)))[0]))
+               # print('attempting to load grog ' + str(x) + ' at ' + str(list(Path.cwd().glob('**/'+str(x)))[0]))
                 roller.load(x)
                 return roller
             except:
@@ -34,25 +35,61 @@ class DiceRolls(commands.Cog):
     @commands.command(name='simple', help='Rolls a simple die', aliases=['s'])
     async def roll_simple(self, ctx,*args):
         print('Simple Die Rolled!')
-        roller = self.loadChar(*args)
+        for x in args:
+            try:
+                roller = self.loadChar(x)
+                if roller.name != 'default':
+                    break
+            except:
+                None
+        try:
+            args=list(args)
+            try:
+                args.remove(roller.name)
+            except:
+                roller = Character()
+            print(args)
+        except:
+            None
+        print(roller.name)
         rando = random.randint(1,10)
-        print('random number generated, ' + str(rando))
+     #   print('random number generated, ' + str(rando))
         if roller.name != 'default':
             try:
                 char = list(set(args)&set(roller.charList))[0]
                 charadd = roller.characteristics[char]
                 addition = charadd
+                #print(args)
+                args.remove(char)
             except:
                 char = '*no characteristic entered*'
+                charadd = 0
                 addition = 0
             try:
-                ability = list(set(args)&set(roller.referenceAbility.abilityList()))[0]
+                print(args)
+                abName = ''
+                for x in args:
+                    abName = abName + x
+                similarity = 100
+                print(abName)
+                if abName == []:
+                    raise Exception('no ability entered')
+                for x in roller.referenceAbility.abilityList():
+                    #rint('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
+                    if Levenshtein.distance(x,abName.upper()) < similarity:
+                        ability = x
+                        similarity = Levenshtein.distance(x,abName.upper())
+                    else:
+                        pass
+                #ability = list(set(args)&set(roller.referenceAbility.abilityList()))[0]
                 abiadd = roller.abilities[ability].score
                 addition += abiadd
             except:
+                print('no ability entered')
                 ability = '*no ability entered*'
+                abiadd = 0
 
-            await ctx.send(DiscordStyle.style(roller.name + ' rolls a simple die, adds their ' + char + ' of ' + str(charadd) + ' and their ' + ability + ' of ' + str(abiadd)))
+            await ctx.send(DiscordStyle.style(roller.name + ' rolls a simple die, adds their ' + char + ' of ' + str(charadd) + ' and their ' + ability.capitalize() + ' of ' + str(abiadd)))
             await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '} + ' + str(addition) + ' equaling ' + str(rando + addition), style)))
         else:
             print('sending result to discord')
@@ -60,26 +97,64 @@ class DiceRolls(commands.Cog):
 
     @commands.command(name='stress', help='Rolls a stress die', aliases=['st'])
     async def roll_stress(self, ctx,*args):
-        roller = self.loadChar(*args)
         result = random.randint(1,10)
+        for x in args:
+            try:
+                roller = self.loadChar(x)
+                if roller.name != 'default':
+                    break
+            except:
+                None
+        try:
+            args=list(args)
+            try:
+                args.remove(roller.name)
+            except:
+                roller = Character()
+            print(args)
+        except:
+            None
+        print(roller.name)
+        rando = random.randint(1,10)
+     #   print('random number generated, ' + str(rando))
         if roller.name != 'default':
             try:
                 char = list(set(args)&set(roller.charList))[0]
                 charadd = roller.characteristics[char]
                 addition = charadd
+                #print(args)
+                args.remove(char)
             except:
                 char = '*no characteristic entered*'
+                charadd = 0
                 addition = 0
             try:
-                ability = list(set(args)&set(roller.referenceAbility.abilityList()))[0]
+                print(args)
+                abName = ''
+                for x in args:
+                    abName = abName + x
+                similarity = 100
+                print(abName)
+                if abName == []:
+                    raise Exception('no ability entered')
+                for x in roller.referenceAbility.abilityList():
+                    #rint('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
+                    if Levenshtein.distance(x,abName.upper()) < similarity:
+                        ability = x
+                        similarity = Levenshtein.distance(x,abName.upper())
+                    else:
+                        pass
+                #ability = list(set(args)&set(roller.referenceAbility.abilityList()))[0]
                 abiadd = roller.abilities[ability].score
                 addition += abiadd
             except:
+                print('no ability entered')
                 ability = '*no ability entered*'
+                abiadd = 0
 
         if (result != 0 and result != 1):
             if roller.name != 'default':
-                await ctx.send(DiscordStyle.style((roller.name + ' rolled a {' + str(result) + '} and added their ' + char + ' of ' + str(charadd) + ' and their ' + ability + ' of ' +str(abiadd) + ' for a result of ' + str(result + addition)), style))
+                await ctx.send(DiscordStyle.style((roller.name + ' rolled a {' + str(result) + '} and added their ' + char + ' of ' + str(charadd) + ' and their ' + ability.capitalize() + ' of ' +str(abiadd) + ' for a result of ' + str(result + addition)), style))
             else:
                 await ctx.send(DiscordStyle.style(('You rolled a {' + str(result) + '} '), style))
         elif result == 1:
@@ -95,14 +170,14 @@ class DiceRolls(commands.Cog):
                     power = ( power + power )
                     result = (random.randint(1,10))
                 if roller.name != 'default':
-                    await ctx.send(DiscordStyle.style((roller.name + '\'s die exploded ' + str(int(math.log(power,2))) + ' times! Resulting in a multiplier of ' + str(power) + '.\n' + roller.name + '\'s final die roll was {' + str(result) + '} equaling a total of ' + str(result*power) + '!\n' + roller.name + ' then adds their ' + char + ' of ' + str(charadd) + ' and their ' + ability + ' of ' +str(abiadd) + ' for a result of ' + str(result*power + addition)), style))
+                    await ctx.send(DiscordStyle.style((roller.name + '\'s die exploded ' + str(int(math.log(power,2))) + ' times! Resulting in a multiplier of ' + str(power) + '.\n' + roller.name + '\'s final die roll was {' + str(result) + '} equaling a total of ' + str(result*power) + '!\n' + roller.name + ' then adds their ' + char + ' of ' + str(charadd) + ' and their ' + ability.capitalize() + ' of ' +str(abiadd) + ' for a result of ' + str(result*power + addition)), style))
                 else:
                     await ctx.send(DiscordStyle.style(('Your die exploded ' + str(int(math.log(power,2))) + ' times! Resulting in a multiplier of ' + str(power) + '.\nYour final die roll was {' + str(result) + '} equaling a total of ' + str(result*power) + '!\n'), style))
                 if (result*power >= 20):
                     await ctx.send(Exclamations.surprise())
             else:
                 if roller.name != 'default':
-                    await ctx.send(DiscordStyle.style((roller.name + '\'s second roll was a {' + str(result) + '} which doubles to ' + str(result*power) + '!\n'+ roller.name + ' then adds their ' + char + ' of ' + str(charadd) + ' and their ' + ability + ' of ' +str(abiadd) + ' for a result of ' + str(result*power + addition)), style))
+                    await ctx.send(DiscordStyle.style((roller.name + '\'s second roll was a {' + str(result) + '} which doubles to ' + str(result*power) + '!\n'+ roller.name + ' then adds their ' + char + ' of ' + str(charadd) + ' and their ' + ability.capitalize() + ' of ' +str(abiadd) + ' for a result of ' + str(result*power + addition)), style))
                 else:
                     await ctx.send(DiscordStyle.style(('Your second roll was a {' + str(result) + '} which doubles to ' + str(result*power) + '!'), style))
                 if (result*power >= 20):
