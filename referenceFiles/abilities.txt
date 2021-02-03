@@ -1,3 +1,14 @@
+LATIN*
+A langauge skill covering the usage of Latin.
+Specialties:poetry, prose, specific dialects,
+expansive vocabulary, specific technical vocabulary, slang, storytelling
+(Academic)
+
+FRENCH*
+A language skill covering the usage of French.
+Specialties:poetry, prose, specific dialects,
+expansive vocabulary, specific technical vocabulary, slang, storytelling
+
 (AREA) LORE*
 Knowledge of one particular region,
 covenant, or even a village. It includes knowing

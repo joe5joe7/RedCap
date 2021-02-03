@@ -32,7 +32,7 @@ class DiceRolls(commands.Cog):
 
 
 
-    @commands.command(name='simple', help='Rolls a simple die', aliases=['s'])
+    @commands.command(name='simple', help='Rolls a simple die. ex: !simple greg int charm', aliases=['s'])
     async def roll_simple(self, ctx,*args):
         print('Simple Die Rolled!')
         for x in args:
@@ -47,7 +47,10 @@ class DiceRolls(commands.Cog):
             try:
                 args.remove(roller.name)
             except:
-                roller = Character()
+                try:
+                    args.remove(roller.name.lower())
+                except:
+                    roller = Character()
             print(args)
         except:
             None
@@ -58,7 +61,7 @@ class DiceRolls(commands.Cog):
             try:
                 char = list(set(args)&set(roller.charList))[0]
                 charadd = roller.characteristics[char]
-                addition = charadd
+                addition = int(charadd)
                 #print(args)
                 args.remove(char)
             except:
@@ -66,13 +69,11 @@ class DiceRolls(commands.Cog):
                 charadd = 0
                 addition = 0
             try:
-                print(args)
                 abName = ''
                 for x in args:
-                    abName = abName + x
+                    abName = abName + str(x)
                 similarity = 100
-                print(abName)
-                if abName == []:
+                if abName == '':
                     raise Exception('no ability entered')
                 for x in roller.referenceAbility.abilityList():
                     #rint('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
@@ -83,8 +84,9 @@ class DiceRolls(commands.Cog):
                         pass
                 #ability = list(set(args)&set(roller.referenceAbility.abilityList()))[0]
                 abiadd = roller.abilities[ability].score
-                addition += abiadd
-            except:
+                addition += int(abiadd)
+            except Exception as e:
+                print(e)
                 print('no ability entered')
                 ability = '*no ability entered*'
                 abiadd = 0
@@ -95,7 +97,7 @@ class DiceRolls(commands.Cog):
             print('sending result to discord')
             await ctx.send((DiscordStyle.style('Simple Die Result: {' + str(rando) + '}')))
 
-    @commands.command(name='stress', help='Rolls a stress die', aliases=['st'])
+    @commands.command(name='stress', help='Rolls a stress die. ex: !stress greg int charm', aliases=['st'])
     async def roll_stress(self, ctx,*args):
         result = random.randint(1,10)
         for x in args:
@@ -110,7 +112,10 @@ class DiceRolls(commands.Cog):
             try:
                 args.remove(roller.name)
             except:
-                roller = Character()
+                try:
+                    args.remove(roller.name.lower())
+                except:
+                    roller = Character()
             print(args)
         except:
             None
@@ -121,7 +126,7 @@ class DiceRolls(commands.Cog):
             try:
                 char = list(set(args)&set(roller.charList))[0]
                 charadd = roller.characteristics[char]
-                addition = charadd
+                addition = int(charadd)
                 #print(args)
                 args.remove(char)
             except:
@@ -129,13 +134,11 @@ class DiceRolls(commands.Cog):
                 charadd = 0
                 addition = 0
             try:
-                print(args)
                 abName = ''
                 for x in args:
-                    abName = abName + x
+                    abName = abName + str(x)
                 similarity = 100
-                print(abName)
-                if abName == []:
+                if abName == '':
                     raise Exception('no ability entered')
                 for x in roller.referenceAbility.abilityList():
                     #rint('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
@@ -146,8 +149,9 @@ class DiceRolls(commands.Cog):
                         pass
                 #ability = list(set(args)&set(roller.referenceAbility.abilityList()))[0]
                 abiadd = roller.abilities[ability].score
-                addition += abiadd
-            except:
+                addition += int(abiadd)
+            except Exception as e:
+                print(e)
                 print('no ability entered')
                 ability = '*no ability entered*'
                 abiadd = 0
@@ -188,8 +192,8 @@ class DiceRolls(commands.Cog):
             else:
                 await ctx.send(DiscordStyle.style(('You rolled a {0}, you might botch! Use the !botch command to check!'),'red'))
 
-    @commands.command(name='botch', help='Rolls your botch dice', aliases=['b'])
-    async def botch(self, ctx,num: int):
+    @commands.command(name='botch', help='Rolls your botch dice. Use the format !botch [number]', aliases=['b'])
+    async def botch(self, ctx,num: int = 1):
         await ctx.send(DiscordStyle.style('Finger\'s crossed for you!', style))
         x = 0
         dice = []

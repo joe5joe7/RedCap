@@ -1,6 +1,10 @@
 from discord import client
 
+
+import Character
 from Character import Character
+from Character import Virtue
+from Character import Flaw
 import random
 import pickle
 from discord.ext import commands
@@ -8,7 +12,7 @@ from pathlib import Path
 import names
 import DiscordStyle
 
-class Grog(commands.Cog):
+class CharacterSheet(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
         self.__last_member = None
@@ -32,19 +36,20 @@ class Grog(commands.Cog):
         grog=Character(name)
         grog.genStats(*focus)
         grog.genAbilities(200)
+        grog.genVirtuesFlaws(3)
         await ctx.send(DiscordStyle.style(grog.display(),self.style))
         grog.save('tg')
 
-    @commands.command(name='loadGrog',help='loads a previously generated grog.')
-    async def loadGrog(self,ctx,name: str):
+    @commands.command(name='loadChar',help='loads a previously generated character.')
+    async def loadChar(self,ctx,name: str):
        # print('attempting to load ' + name)
         temp = Character('temp')
         temp.load(name)
        # print(temp.display())
         await ctx.send(DiscordStyle.style(temp.display(),self.style))
 
-    @commands.command(name='grogList',help='Gives a list of available grogs')
-    async def grogList(self,ctx):
+    @commands.command(name='charList',help='Gives a list of available grogs')
+    async def charList(self,ctx):
         a = Character()
         result = ''
         try:
@@ -57,7 +62,7 @@ class Grog(commands.Cog):
             print(e)
         await ctx.send(result)
 
-    @commands.command(name='importGrog',help='imports a grog via pm')
+    @commands.command(name='createGrog',help='Creates a grog via pm')
     async def importGrog(self,ctx):
         member = ctx.message.author
         await member.send('Hello, I\'m going to help you import your character!')
@@ -132,11 +137,129 @@ class Grog(commands.Cog):
         await member.send('Character saved!')
         await member.send(customCharacter.display())
 
+    def checkExist(self,name):
+        tempChar = Character('temp')
+        try:
+            tempChar.load(name)
+            return True
+        except:
+            return False
+
+    @commands.command(name='importMC',help='Import a character from a metacreator file via PM')
+    async def importMC(self,ctx):
+        try:
+            member = ctx.message.author
+            await member.send('Hello, I\'m going to help you import your character from MetaCreator! Just paste the text below.')
+            msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
+            msg = msg.content
+            contents = msg.splitlines()
+            print('name = ' + contents[0])
+            if self.checkExist(contents[0]):
+                await member.send('A character by this name already exists, would you like to update it? y/n')
+                waiting = True
+                while waiting == True:
+                    msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
+                    if msg.content.lower() == 'n' or msg.content.lower() == 'no':
+                        waiting = False
+                        await member.send('Not a problem, feel free to use the importMC command again with a differently named character.')
+                        contents = []
+                    elif msg.content.lower() =='y' or msg.content.lower() == 'yes':
+                        waiting = False
+                        await member.send('Updating...')
+                    else:
+                        await member.send('Please enter y or n.')
+
+            newChar = Character(contents[0])
+            #print('Characteristics =' + contents[1])
+            char = contents[1].replace(',','')
+            char = char.split(' ')
+            charOrder=[0,1,4,5,2,3,6,7]
+            #['int', 'per', 'str', 'sta', 'pre', 'com', 'dex', 'qik']
+            charList=[]
+            it = 0
+            for x in char:
+                try:
+                    #print(x)
+                    int(x)
+                    newChar.characteristics[newChar.charList[charOrder[it]]] = int(x)
+                    it += 1
+                except:
+                    None
+            #print('Warping score = ' + contents[5])
+            newChar.warpingScore = int(contents[5].split()[2])
+            #print('Confidence = ' + contents[6])
+            newChar.confidence = int(contents[6].split()[1])
+            #print('Virtues and Flaws = ' + contents[7])
+            l = contents[7][18:].split(',')
+            #print(l)
+            last = ''
+            refVirt = Virtue('a')
+            refFlaw = Flaw('a')
+            for x in l:
+                if x[0] == '(' and x[-1] == ')':
+                    if x[-2] == '2':
+                        if refFlaw.validity(last) < refVirt.validity(last):
+                            newChar.addFlaw(last)
+                        else:
+                            newChar.addVirtue(last)
+                    else:
+                        continue
+                if refFlaw.validity(x) < refVirt.validity(x):
+                    #print(x)
+                    newChar.addFlaw(x)
+                else:
+                    #print(x)
+                    newChar.addVirtue(x)
+            #print('Abilities = ' + contents[15])
+            abils = contents[15][11:].split(',')
+            print(abils)
+            for x in abils:
+                y = x.replace('(','').replace(')','')
+                y = y.split()
+                abi = ''
+                specialty = ''
+                yCopy = y.copy()
+                for iterable in yCopy:
+                    try:
+                        score = int(iterable)
+                        break
+                    except:
+                        abi += iterable + ' '
+                        y.remove(iterable)
+                yCopy = y.copy()
+                for iterable in yCopy[1:]:
+                    try:
+                        xp = int(iterable)
+                        break
+                    except:
+                        specialty += iterable + ' '
+                        y.remove(iterable)
+                try:
+                    abiName = newChar.addAbility(abi,specialty.strip())
+                except:
+                    abiName = newChar.addAbility(abi)
+                try:
+                    newChar.abilities[abiName].setScore(score)
+                except:
+                    None
+                try:
+                    newChar.abilities[abiName].setXP(xp)
+                except:
+                    None
+            print('arts = ' + contents[16])
+            newChar.save('g')
+            await member.send('Character successfully saved!')
+            await member.send(newChar.display())
+            #print(newChar.display())
+        except Exception as e:
+            print(e)
+
+
 
 
 
 
 
 def setup(bot):
-    bot.add_cog(Grog(bot))
+    bot.add_cog(CharacterSheet(bot))
 
