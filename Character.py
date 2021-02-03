@@ -591,13 +591,16 @@ class Character():
         output = 'Character name: ' + str(self.name) + '\n'
         for char in self.characteristics:
             output += char.capitalize() + ': ' + str(self.characteristics[char]) + ' '
-        output += '\nAbilities: '
+        output += '\n \n*Abilities:* '
         for x in self.abilities:
-            output += '\n' + x + '(' + self.abilities[x].specialty + '): {' + str(self.abilities[x].score) + '} '
-        output += '\nVirtues: '
+            if self.abilities[x].specialty != '':
+                output += '\n' + x.capitalize() + '(' + self.abilities[x].specialty.capitalize() + '): {' + str(self.abilities[x].score) + '} '
+            else:
+                output += '\n' + x.capitalize() + ': {' + str(self.abilities[x].score) + '} '
+        output += '\n \n*Virtues:* '
         for x in self.virtues:
-            output += '\n' + x
-        output += '\nFlaws: '
+            output += '\n' + x.capitalize()
+        output += '\n \n*Flaws:* '
         for x in self.flaws:
-            output += '\n' + x
+            output += '\n' + x.capitalize()
         return output

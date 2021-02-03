@@ -149,13 +149,30 @@ class CharacterSheet(commands.Cog):
     async def importMC(self,ctx):
         try:
             member = ctx.message.author
-            await member.send('Hello, I\'m going to help you import your character from MetaCreator! Just paste the text below.')
+            await member.send('Hello, I\'m going to help you import your character from MetaCreator! Is this character a grog, companion, or magus? (respond g / c / or m')
+            waiting = True
+            while waiting == True:
+                msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
+                if msg.content.lower() == 'grog' or msg.content.lower() == 'g':
+                    waiting = False
+                    charType = 'g'
+                    await member.send('Please copy and paste the data for your grog below')
+                elif msg.content.lower() =='companion' or msg.content.lower() == 'c':
+                    waiting = False
+                    charType = 'c'
+                    await member.send('Please copy and paste the data for your companion below')
+                elif msg.content.lower() =='magus' or msg.content.lower() == 'm':
+                    waiting = False
+                    charType = 'm'
+                    await member.send('Please copy and paste the data for your magus below')
+                else:
+                    await member.send('Please enter g, c, or m')
             msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
             msg = msg.content
             contents = msg.splitlines()
             print('name = ' + contents[0])
             if self.checkExist(contents[0]):
-                await member.send('A character by this name already exists, would you like to update it? y/n')
+                await member.send('A character by this name already exists, would you like to update it, or check  it out before updating? y / n / c')
                 waiting = True
                 while waiting == True:
                     msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
@@ -166,6 +183,11 @@ class CharacterSheet(commands.Cog):
                     elif msg.content.lower() =='y' or msg.content.lower() == 'yes':
                         waiting = False
                         await member.send('Updating...')
+                    elif msg.content.lower() =='c' or msg.content.lower() == 'check':
+                        tempChar = Character()
+                        tempChar.load(contents[0])
+                        await member.send(tempChar.display())
+                        await  member.send('\n \n Is this the character you would like to update? Please enter y / n')
                     else:
                         await member.send('Please enter y or n.')
 
@@ -247,7 +269,7 @@ class CharacterSheet(commands.Cog):
                 except:
                     None
             print('arts = ' + contents[16])
-            newChar.save('g')
+            newChar.save(charType)
             await member.send('Character successfully saved!')
             await member.send(newChar.display())
             #print(newChar.display())
