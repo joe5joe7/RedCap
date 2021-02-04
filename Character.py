@@ -25,15 +25,13 @@ class VirtueFlaw():
             pass
         similarity = 100
 
-
-
     def loadReference(self):
         with open(self.referenceFile, 'r', encoding='utf-8') as file:
             refsheet = file.readlines()
         firstIteration = True
         newVirtue = self.virtuesRef.copy()
         oldLine = refsheet[0]
-        tempDescription=[]
+        tempDescription = []
         for line in refsheet:
             if firstIteration:
                 for x in self.valueTypes:
@@ -43,52 +41,52 @@ class VirtueFlaw():
                                 if x + ', ' + y in line:
                                     newVirtue['name'] = oldLine.strip()
                                     newVirtue['value'] = x
-                                    newVirtue['type']=y
+                                    newVirtue['type'] = y
                                     firstIteration = False
                                     continue
                         elif x == 'Special':
                             newVirtue['name'] = oldLine.strip()
                             newVirtue['value'] = 'Special'
-                            newVirtue['type']= 'Special'
+                            newVirtue['type'] = 'Special'
                             firstIteration = False
                             continue
                 oldLine = line
             else:
                 for x in self.valueTypes:
-                        if x in line:
-                            if x != 'Special':
-                                for y in self.types:
-                                    if x + ', ' + y in line:
-                                        description = ''
-                                        for d in tempDescription[1:-1]:
-                                             description += d
-                                        tempDescription = []
-                                        newVirtue['description'] = description
-                                        self.virtuesLib[newVirtue['name']]=newVirtue
-                                        newVirtue = {}
-                                        newVirtue['name'] = oldLine.strip()
-                                        newVirtue['value'] = x
-                                        newVirtue['type']=y
-                                        continue
-                            elif x == 'Special':
-                                description = ''
-                                for d in tempDescription[1:-1]:
-                                    description += d
-                                tempDescription = []
-                                newVirtue['description'] = description
-                                self.virtuesLib[newVirtue['name']]=newVirtue
-                                newVirtue = {}
-                                newVirtue['name'] = oldLine.strip()
-                                newVirtue['value'] = x
-                                newVirtue['type']=x
-                                continue
+                    if x in line:
+                        if x != 'Special':
+                            for y in self.types:
+                                if x + ', ' + y in line:
+                                    description = ''
+                                    for d in tempDescription[1:-1]:
+                                        description += d
+                                    tempDescription = []
+                                    newVirtue['description'] = description
+                                    self.virtuesLib[newVirtue['name']] = newVirtue
+                                    newVirtue = {}
+                                    newVirtue['name'] = oldLine.strip()
+                                    newVirtue['value'] = x
+                                    newVirtue['type'] = y
+                                    continue
+                        elif x == 'Special':
+                            description = ''
+                            for d in tempDescription[1:-1]:
+                                description += d
+                            tempDescription = []
+                            newVirtue['description'] = description
+                            self.virtuesLib[newVirtue['name']] = newVirtue
+                            newVirtue = {}
+                            newVirtue['name'] = oldLine.strip()
+                            newVirtue['value'] = x
+                            newVirtue['type'] = x
+                            continue
                 tempDescription.append(line)
                 oldLine = line
         description = ''
         for d in tempDescription[1:-1]:
             description += d
         newVirtue['description'] = description
-        self.virtuesLib[newVirtue['name']]=newVirtue
+        self.virtuesLib[newVirtue['name']] = newVirtue
 
     def printOptions(self):
         value = ''
@@ -115,9 +113,9 @@ class VirtueFlaw():
         return result
 
     def summary(self):
-        return (self.name + '\n' + self.value + ', '+ self.type + '\n Description: ' + self.description)
+        return (self.name + '\n' + self.value + ', ' + self.type + '\n Description: ' + self.description)
 
-    def validity(self,name):
+    def validity(self, name):
         similarity = 100
         for x in self.virtuesLib:
             # print('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
@@ -128,8 +126,9 @@ class VirtueFlaw():
                 pass
         return similarity
 
+
 class Virtue(VirtueFlaw):
-    def __init__(self,name,*args):
+    def __init__(self, name, *args):
         super().__init__()
         self.referenceFile = self.referencePath / 'virtues.txt'
         self.loadReference()
@@ -148,8 +147,9 @@ class Virtue(VirtueFlaw):
     def isVirtue(self):
         return True
 
+
 class Flaw(VirtueFlaw):
-    def __init__(self,name,*args):
+    def __init__(self, name, *args):
         super().__init__()
         self.referenceFile = self.referencePath / 'flaws.txt'
         self.loadReference()
@@ -208,11 +208,11 @@ class Ability():
         self.xp += xp
         self.score = int((-5 + math.sqrt(25 + 40 * xp)) / 10)
 
-    def setScore(self,score):
+    def setScore(self, score):
         self.score = score
-        xp=0
+        xp = 0
         while score > 0:
-            xp += score*5
+            xp += score * 5
             score -= 1
         self.xp = xp
 
@@ -264,8 +264,8 @@ class Ability():
 
     def summary(self):
         return (
-                    'Name: ' + self.name + '\n Description: ' + self.description + '\n Type: ' + self.type + '\n Speciality: ' + self.specialty + '\n XP: ' + str(
-                self.xp) + '\n Score: ' + str(self.score))
+                'Name: ' + self.name + '\n Description: ' + self.description + '\n Type: ' + self.type + '\n Speciality: ' + self.specialty + '\n XP: ' + str(
+            self.xp) + '\n Score: ' + str(self.score))
 
     def availableAbilities(self):
         available = ''
@@ -285,16 +285,18 @@ class Ability():
     def isAbility(self):
         return True
 
+
 class Character():
-    def __init__(self, name='default'):
+    def __init__(self, basePath= (Path.cwd() / 'servers' / 'unClassified'), name='default'):
         self.name = name
-        tempGrogs = Path.cwd() / 'characters' / 'tempGrogs'
-        Grogs = Path.cwd() / 'characters' / 'Grogs'
-        tempCompanions = Path.cwd() / 'characters' / 'tempCompanions'
-        Companions = Path.cwd() / 'characters' / 'Companions'
-        tempMagi = Path.cwd() / 'characters' / 'tempMagi'
-        Magi = Path.cwd() / 'characters' / 'Magi'
-        self.identifier = Path.cwd() / 'identifier'
+        self.basePath = basePath
+        tempGrogs = basePath / 'characters' / 'tempGrogs'
+        Grogs = basePath / 'characters' / 'Grogs'
+        tempCompanions = basePath / 'characters' / 'tempCompanions'
+        Companions = basePath / 'characters' / 'Companions'
+        tempMagi = basePath / 'characters' / 'tempMagi'
+        Magi = basePath / 'characters' / 'Magi'
+        self.identifier = basePath / 'identifier'
         self.filepaths = {'tg': tempGrogs, 'g': Grogs, 'tc': tempCompanions, 'c': Companions, 'tm': tempMagi, 'm': Magi,
                           'i': self.identifier}
         self.identifier = -1
@@ -381,7 +383,7 @@ class Character():
             self.abilities[randAbility['name']] = Ability(randAbility['name'])
             self.abilities[randAbility['name']].addXp(change)
 
-    def genVirtuesFlaws(self,points):
+    def genVirtuesFlaws(self, points):
         virtuePoints = 0
         while virtuePoints < points:
             print(virtuePoints)
@@ -424,18 +426,18 @@ class Character():
             print(x.summary())
             print('\n \n \n')
 
-    def addVirtue(self,name):
+    def addVirtue(self, name):
         tempVir = Virtue(name)
         self.virtues[tempVir.name] = tempVir
         return tempVir.name
 
-    def addFlaw(self,name):
+    def addFlaw(self, name):
         tempFlaw = Flaw(name)
         self.flaws[tempFlaw.name] = tempFlaw
         return tempFlaw.name
 
-    def addAbility(self, name,speciality = 'default'):
-        tempAbi = Ability(name,speciality)
+    def addAbility(self, name, speciality='default'):
+        tempAbi = Ability(name, speciality)
         try:
             self.abilities[tempAbi.name]
             raise Exception('ability already exists')
@@ -449,7 +451,7 @@ class Character():
         print('saving ' + self.name)
         try:
             # Tries to access a saved character with the same name
-            existingPath = list(Path.cwd().glob('**/' + self.name))[0]
+            existingPath = list(self.basePath.glob('**/' + self.name))[0]
             infile = open(existingPath, 'rb')
             savedChar = pickle.load(infile)
             infile.close()
@@ -532,18 +534,17 @@ class Character():
         # print('Character saved')
         return ('Character saved')
 
-
     # print(self.characteristics)
     def load(self, name):
         #	print('attempting to load ' + name)
         #	print('using path ' + str(Path.cwd() / 'characters' / '**' / name))
         # p = list(Path.cwd().glob('**/'+name))[0]
         name = name.capitalize()
-        print(name)
-        print((list(Path.cwd().glob('**/' + name))[0]))
-        infile = open(list(Path.cwd().glob('**/' + name))[0], 'rb')
+        #print(name)
+        #print((list(self.basePath.glob('**/' + name))[0]))
+        infile = open(list(self.basePath.glob('**/' + name))[0], 'rb')
         char = pickle.load(infile)
-        infoF = Path(list(Path.cwd().glob('**/' + name))[0]).parent / ('info.' + char.name)
+        infoF = Path(list(self.basePath.glob('**/' + name))[0]).parent / ('info.' + char.name)
         infile.close()
         #	print('successfully unpickled')
         try:
@@ -594,7 +595,8 @@ class Character():
         output += '\n \n*Abilities:* '
         for x in self.abilities:
             if self.abilities[x].specialty != '':
-                output += '\n' + x.capitalize() + '(' + self.abilities[x].specialty.capitalize() + '): {' + str(self.abilities[x].score) + '} '
+                output += '\n' + x.capitalize() + '(' + self.abilities[x].specialty.capitalize() + '): {' + str(
+                    self.abilities[x].score) + '} '
             else:
                 output += '\n' + x.capitalize() + ': {' + str(self.abilities[x].score) + '} '
         output += '\n \n*Virtues:* '

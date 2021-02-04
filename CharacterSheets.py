@@ -11,6 +11,7 @@ from discord.ext import commands
 from pathlib import Path
 import names
 import DiscordStyle
+from Tools import Tools
 
 class CharacterSheet(commands.Cog):
     def __init__(self,bot):
@@ -21,6 +22,26 @@ class CharacterSheet(commands.Cog):
         self.farmer={'farmer','peasant'}
         self.priest={'priest','monk','chaplain'}
         self.style='blue'
+        self.associations = {}
+
+    
+    async def basePath(self,ctx,msg = False):
+        if ctx.guild != None:
+            return(Path.cwd()/'servers'/str(ctx.guild.id))
+        if ctx.guild == None:
+            member = ctx.message.author
+            t = Tools(self.bot)
+            if str(member.id) in t.memberList:
+                try:
+                    if msg:
+                        await member.send('Currently associated with the guild ' + t.memberList[str(member.id)][2] + ', if you would like to upload to a different server use the !register command there.')
+                except:
+                        await member.send('Server regristration has been updated since last use, please use !register in your server of choice to use dms with RedCap. Thank you!')
+                        raise Exception
+                return (Path.cwd()/'servers'/str(t.memberList[str(member.id)][1]))
+            await member.send('You are currently not registered to a server. Please use the !register command in your server of choice before using dms with RedCap. Thank you!')
+            raise Exception
+            return(Path.cwd()/'servers'/'unClassified')
 
     @commands.command(name='genGrog',help='Generates a random grog.')
     async def genGrog(self,ctx,*args):
@@ -33,7 +54,8 @@ class CharacterSheet(commands.Cog):
 
         #print(focus)
         name=names.get_first_name()
-        grog=Character(name)
+        
+        grog=Character(await self.basePath(ctx),name)
         grog.genStats(*focus)
         grog.genAbilities(200)
         grog.genVirtuesFlaws(3)
@@ -43,17 +65,17 @@ class CharacterSheet(commands.Cog):
     @commands.command(name='loadChar',help='loads a previously generated character.')
     async def loadChar(self,ctx,name: str):
        # print('attempting to load ' + name)
-        temp = Character('temp')
+        temp = Character(await self.basePath(ctx),'temp')
         temp.load(name)
        # print(temp.display())
         await ctx.send(DiscordStyle.style(temp.display(),self.style))
 
     @commands.command(name='charList',help='Gives a list of available grogs')
     async def charList(self,ctx):
-        a = Character()
+        a = Character(await self.basePath(ctx))
         result = ''
         try:
-            p = Path.cwd() / 'characters'
+            p = await self.basePath(ctx)/'characters'
             l = list(p.glob('*/*'))
             for x in l:
                 if x.is_file():
@@ -69,7 +91,7 @@ class CharacterSheet(commands.Cog):
         await member.send('What is your character\'s name?')
         msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
         content = msg.content
-        customCharacter = Character(str(content))
+        customCharacter = Character(await self.basePath(ctx),str(content))
         await member.send('Your character is named ' + customCharacter.name + '.')
         await member.send('What are your characters characteristics? Please copy and paste my next message and edit the numbers for your stats. Make sure to leave a space on either side of each number. I\'ll verify they add up for you.')
         char = ''
@@ -137,8 +159,8 @@ class CharacterSheet(commands.Cog):
         await member.send('Character saved!')
         await member.send(customCharacter.display())
 
-    def checkExist(self,name):
-        tempChar = Character('temp')
+    async def checkExist(self,ctx,name):
+        tempChar = Character(await self.basePath(ctx),'temp')
         try:
             tempChar.load(name)
             return True
@@ -149,7 +171,8 @@ class CharacterSheet(commands.Cog):
     async def importMC(self,ctx):
         try:
             member = ctx.message.author
-            await member.send('Hello, I\'m going to help you import your character from MetaCreator! Is this character a grog, companion, or magus? (respond g / c / or m')
+            await self.basePath(ctx,True)
+            await member.send('Hello, I\'m going to help you import your character from MetaCreator! Is this character a grog, companion, or magus? (respond g / c / or m)')
             waiting = True
             while waiting == True:
                 msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
@@ -171,7 +194,8 @@ class CharacterSheet(commands.Cog):
             msg = msg.content
             contents = msg.splitlines()
             print('name = ' + contents[0])
-            if self.checkExist(contents[0]):
+            if await self.checkExist(ctx,contents[0]):
+                print('check 0')
                 await member.send('A character by this name already exists, would you like to update it, or check  it out before updating? y / n / c')
                 waiting = True
                 while waiting == True:
@@ -184,14 +208,15 @@ class CharacterSheet(commands.Cog):
                         waiting = False
                         await member.send('Updating...')
                     elif msg.content.lower() =='c' or msg.content.lower() == 'check':
-                        tempChar = Character()
+                        tempChar = Character(await self.basePath(ctx),contents[0])
                         tempChar.load(contents[0])
                         await member.send(tempChar.display())
                         await  member.send('\n \n Is this the character you would like to update? Please enter y / n')
                     else:
                         await member.send('Please enter y or n.')
 
-            newChar = Character(contents[0])
+            print('check 0.5')
+            newChar = Character(await self.basePath(ctx),contents[0])
             #print('Characteristics =' + contents[1])
             char = contents[1].replace(',','')
             char = char.split(' ')
@@ -234,7 +259,7 @@ class CharacterSheet(commands.Cog):
                     newChar.addVirtue(x)
             #print('Abilities = ' + contents[15])
             abils = contents[15][11:].split(',')
-            print(abils)
+            #print(abils)
             for x in abils:
                 y = x.replace('(','').replace(')','')
                 y = y.split()
@@ -268,7 +293,7 @@ class CharacterSheet(commands.Cog):
                     newChar.abilities[abiName].setXP(xp)
                 except:
                     None
-            print('arts = ' + contents[16])
+            #print('arts = ' + contents[16])
             newChar.save(charType)
             await member.send('Character successfully saved!')
             await member.send(newChar.display())
