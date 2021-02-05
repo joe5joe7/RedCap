@@ -9,7 +9,7 @@ import re
 
 
 class VirtueFlaw():
-    def __init__(self):
+    def __init__(self,speciality = ''):
         self.name = ''
         self.description = ''
         self.value = ''
@@ -19,11 +19,16 @@ class VirtueFlaw():
         self.virtuesRef = {'name': '', 'description': '', 'value': '', 'type': ''}
         self.virtuesLib = {}
         self.referencePath = Path.cwd() / 'referenceFiles'
+        self.speciality = speciality
         try:
             self.referencePath.mkdir(parents=True)
         except:
             pass
         similarity = 100
+
+    def addSpecialty(self,speciality):
+        self.speciality = speciality
+
 
     def loadReference(self):
         with open(self.referenceFile, 'r', encoding='utf-8') as file:
@@ -113,7 +118,10 @@ class VirtueFlaw():
         return result
 
     def summary(self):
-        return (self.name + '\n' + self.value + ', ' + self.type + '\n Description: ' + self.description)
+        if self.speciality != '':
+            return (self.name + '\n' + self.value + '(' + self.speciality + '), ' + self.type + '\n Description: ' + self.description)
+        else:
+            return (self.name + '\n' + self.value + ', ' + self.type + '\n Description: ' + self.description)
 
     def validity(self, name):
         similarity = 100
@@ -305,6 +313,8 @@ class Character():
         self.referenceFlaw = Flaw('ABILITY BLOCK')
         self.warpingScore = 0
         self.confidence = 0
+        self.covenant = 'undefined'
+        self.age = 0
         for key in self.filepaths:
             try:
                 self.filepaths[key].mkdir(parents=True)
@@ -321,6 +331,46 @@ class Character():
             'dex': 0,
             'qik': 0,
         }
+        self.techniques = {
+            'cr': None,
+            'in': None,
+            'mu': None,
+            'pe': None,
+            're': None
+        }
+        self.forms = {
+            'an': None,
+            'aq': None,
+            'au': None,
+            'co': None,
+            'he': None,
+            'ig': None,
+            'im': None,
+            'me': None,
+            'te': None,
+            'vi': None
+        }
+        self.techniquesXP = {
+            'cr': None,
+            'in': None,
+            'mu': None,
+            'pe': None,
+            're': None
+        }
+        self.formsXP = {
+            'an': None,
+            'aq': None,
+            'au': None,
+            'co': None,
+            'he': None,
+            'ig': None,
+            'im': None,
+            'me': None,
+            'te': None,
+            'vi': None
+        }
+        self.techniqueList = ['cr','in','mu','pe','re']
+        self.formList = ['an','aq','au','co','he','ig','im','me','te','vi']
         self.charList = ['int', 'per', 'str', 'sta', 'pre', 'com', 'dex', 'qik']
         self.scorePoints = {
             -3: -6, -2: -3, -1: -1, 0: 0, 1: 1, 2: 3, 3: 6
@@ -426,13 +476,13 @@ class Character():
             print(x.summary())
             print('\n \n \n')
 
-    def addVirtue(self, name):
-        tempVir = Virtue(name)
+    def addVirtue(self, name,specialty = ''):
+        tempVir = Virtue(name,specialty)
         self.virtues[tempVir.name] = tempVir
         return tempVir.name
 
-    def addFlaw(self, name):
-        tempFlaw = Flaw(name)
+    def addFlaw(self, name,specialty = ''):
+        tempFlaw = Flaw(name,specialty)
         self.flaws[tempFlaw.name] = tempFlaw
         return tempFlaw.name
 
@@ -605,4 +655,13 @@ class Character():
         output += '\n \n*Flaws:* '
         for x in self.flaws:
             output += '\n' + x.capitalize()
+        output += '\n \n*Arts:*'
+        for x in self.techniques:
+            output += x.capitalize() + ': ' + str(self.techniques[x]) + ' '
+            if self.techniquesXP[x] != None:
+                output += '(' + str(self.techniquesXP[x]) + ') '
+        for x in self.forms:
+            output += x.capitalize() + ': ' + str(self.forms[x]) + ' '
+            if self.formsXP[x] != None:
+                output += '(' + str(self.formsXP[x]) + ') '
         return output

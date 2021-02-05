@@ -12,6 +12,13 @@ from pathlib import Path
 import names
 import DiscordStyle
 from Tools import Tools
+import re
+
+
+
+
+
+
 
 class CharacterSheet(commands.Cog):
     def __init__(self,bot):
@@ -193,10 +200,10 @@ class CharacterSheet(commands.Cog):
             msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
             msg = msg.content
             contents = msg.splitlines()
-            print('name = ' + contents[0])
+            #print('name = ' + contents[0])
             if await self.checkExist(ctx,contents[0]):
                 print('check 0')
-                await member.send('A character by this name already exists, would you like to update it, or check  it out before updating? y / n / c')
+                await member.send('A character named ' + contents[0] + ' already exists on this server. Would you like to update that character? yes / no / check')
                 waiting = True
                 while waiting == True:
                     msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
@@ -213,86 +220,210 @@ class CharacterSheet(commands.Cog):
                         await member.send(tempChar.display())
                         await  member.send('\n \n Is this the character you would like to update? Please enter y / n')
                     else:
-                        await member.send('Please enter y or n.')
+                        await member.send('Please enter yes, no, or check')
 
             print('check 0.5')
             newChar = Character(await self.basePath(ctx),contents[0])
-            #print('Characteristics =' + contents[1])
-            char = contents[1].replace(',','')
-            char = char.split(' ')
-            charOrder=[0,1,4,5,2,3,6,7]
-            #['int', 'per', 'str', 'sta', 'pre', 'com', 'dex', 'qik']
-            charList=[]
-            it = 0
-            for x in char:
-                try:
-                    #print(x)
-                    int(x)
-                    newChar.characteristics[newChar.charList[charOrder[it]]] = int(x)
-                    it += 1
-                except:
-                    None
-            #print('Warping score = ' + contents[5])
-            newChar.warpingScore = int(contents[5].split()[2])
-            #print('Confidence = ' + contents[6])
-            newChar.confidence = int(contents[6].split()[1])
-            #print('Virtues and Flaws = ' + contents[7])
-            l = contents[7][18:].split(',')
-            #print(l)
-            last = ''
-            refVirt = Virtue('a')
-            refFlaw = Flaw('a')
-            for x in l:
-                if x[0] == '(' and x[-1] == ')':
-                    if x[-2] == '2':
-                        if refFlaw.validity(last) < refVirt.validity(last):
-                            newChar.addFlaw(last)
+            for line in contents:
+                title = line.split(':')[0]
+                title = title.strip()
+                content = line.replace(title + ':', '')
+                print(title)
+                print(content)
+                if title == 'Covenant':
+                    newChar.covenant = content
+                elif title ==  'Characteristics':
+                    content = content.replace(',','').split(' ')
+                    #['int', 'per', 'str', 'sta', 'pre', 'com', 'dex', 'qik']
+                    charOrder=[0,1,4,5,2,3,6,7]
+                    it = 0
+                    for x in content:
+                        print(x)
+                        try:
+                            int(x)
+                            newChar.characteristics[newChar.charList[charOrder[it]]] = int(x)
+                            it += 1
+                        except:
+                            None
+                elif title == 'Age':
+                    newChar.age = content
+                elif title == 'Warping Score':
+                    try:
+                        newChar.warpingScore = int(content.replace('(','').replace(')','').split(' ')[0])
+                        newChar.warpingPoints = int(content.replace('(','').replace(')','').split(' ')[1])
+                    except:
+                        None
+                elif title == 'Confidence':
+                    newChar.confidence = int(content.replace('(','').replace(')','').strip().split(' ')[0])
+                elif title == 'Virtues and Flaws':
+                    l = content.split(',')
+                    #print(l)
+                    last = ''
+                    refVirt = Virtue('a')
+                    refFlaw = Flaw('a')
+                    spec = None
+                    for x in l:
+                        test = re.search('\((.*)\)',x)
+                        if test != None:
+                            if test != '':
+                                spec = test.group().replace('(','').replace(')','').strip()
+                                x = x.replace(test.group(),'')
+                        test = re.search('\[(.*)\]',x)
+                        if test != None:
+                            if test!= '' and spec != None:
+                                spec += ' ' + test.group().replace('(','').replace(')','').strip()
+                                x = x.replace(test.group(),'')
+                            elif test != '' and spec == None:
+                                spec = test.group().replace('(','').replace(')','').strip()
+                                x = x.replace(test.group(),'')
+                        if refFlaw.validity(x) < refVirt.validity(x):
+                            #print(x)
+                            if spec == None:
+                                newChar.addFlaw(x)
+                            elif spec != None:
+                                newChar.addFlaw(x,spec)
                         else:
-                            newChar.addVirtue(last)
-                    else:
-                        continue
-                if refFlaw.validity(x) < refVirt.validity(x):
-                    #print(x)
-                    newChar.addFlaw(x)
-                else:
-                    #print(x)
-                    newChar.addVirtue(x)
-            #print('Abilities = ' + contents[15])
-            abils = contents[15][11:].split(',')
-            #print(abils)
-            for x in abils:
-                y = x.replace('(','').replace(')','')
-                y = y.split()
-                abi = ''
-                specialty = ''
-                yCopy = y.copy()
-                for iterable in yCopy:
-                    try:
-                        score = int(iterable)
-                        break
-                    except:
-                        abi += iterable + ' '
-                        y.remove(iterable)
-                yCopy = y.copy()
-                for iterable in yCopy[1:]:
-                    try:
-                        xp = int(iterable)
-                        break
-                    except:
-                        specialty += iterable + ' '
-                        y.remove(iterable)
-                try:
-                    abiName = newChar.addAbility(abi,specialty.strip())
-                except:
-                    abiName = newChar.addAbility(abi)
-                try:
-                    newChar.abilities[abiName].setScore(score)
-                except:
-                    None
-                try:
-                    newChar.abilities[abiName].setXP(xp)
-                except:
-                    None
+                            #print(x)
+                            if spec == None:
+                                newChar.addVirtue(x)
+                            elif spec != None:
+                                newChar.addVirtue(x,spec)
+                        spec = None
+                elif title == 'Abilities':
+                    abils = content.split(',')
+                    #print(abils)
+                    for x in abils:
+                        y = x.replace('(','').replace(')','')
+                        y = y.split()
+                        abi = ''
+                        specialty = ''
+                        yCopy = y.copy()
+                        for iterable in yCopy:
+                            try:
+                                score = int(iterable)
+                                break
+                            except:
+                                abi += iterable + ' '
+                                y.remove(iterable)
+                        yCopy = y.copy()
+                        for iterable in yCopy[1:]:
+                            try:
+                                xp = int(iterable)
+                                break
+                            except:
+                                specialty += iterable + ' '
+                                y.remove(iterable)
+                        try:
+                            abiName = newChar.addAbility(abi,specialty.strip())
+                        except:
+                            abiName = newChar.addAbility(abi)
+                        try:
+                            newChar.abilities[abiName].setScore(score)
+                        except:
+                            None
+                        try:
+                            newChar.abilities[abiName].setXP(xp)
+                        except:
+                            None
+                elif title == 'Arts':
+                    arts = content.split(',')
+                    for x in arts:
+                        art = x.strip().split(' ')[0]
+                        x = x.replace(art,'')
+                        art = art.lower()
+                        b = x.split('+')
+                        score = int(b[0].strip())
+                        xp = None
+                        try:
+                            xp = int(b[1].strip())
+                        except:
+                            None
+                        if art in newChar.formList:
+                            newChar.forms[art] = score
+                            newChar.formsXP[art]=xp
+                        elif art in newChar.techniqueList:
+                            newChar.techniques[art] = score
+                            newChar.techniquesXP[art] = xp
+
+                        score
+
+
+            # #print('Characteristics =' + contents[1])
+            # char = contents[1].replace(',','')
+            # char = char.split(' ')
+            # charOrder=[0,1,4,5,2,3,6,7]
+            # #['int', 'per', 'str', 'sta', 'pre', 'com', 'dex', 'qik']
+            # charList=[]
+            # it = 0
+            # for x in char:
+            #     try:
+            #         #print(x)
+            #         int(x)
+            #         newChar.characteristics[newChar.charList[charOrder[it]]] = int(x)
+            #         it += 1
+            #     except:
+            #         None
+            # #print('Warping score = ' + contents[5])
+            # newChar.warpingScore = int(contents[5].split()[2])
+            # #print('Confidence = ' + contents[6])
+            # newChar.confidence = int(contents[6].split()[1])
+            # #print('Virtues and Flaws = ' + contents[7])
+            # l = contents[7][18:].split(',')
+            # #print(l)
+            # last = ''
+            # refVirt = Virtue('a')
+            # refFlaw = Flaw('a')
+            # for x in l:
+            #     if x[0] == '(' and x[-1] == ')':
+            #         if x[-2] == '2':
+            #             if refFlaw.validity(last) < refVirt.validity(last):
+            #                 newChar.addFlaw(last)
+            #             else:
+            #                 newChar.addVirtue(last)
+            #         else:
+            #             continue
+            #     if refFlaw.validity(x) < refVirt.validity(x):
+            #         #print(x)
+            #         newChar.addFlaw(x)
+            #     else:
+            #         #print(x)
+            #         newChar.addVirtue(x)
+            # #print('Abilities = ' + contents[15])
+            # abils = contents[15][11:].split(',')
+            # #print(abils)
+            # for x in abils:
+            #     y = x.replace('(','').replace(')','')
+            #     y = y.split()
+            #     abi = ''
+            #     specialty = ''
+            #     yCopy = y.copy()
+            #     for iterable in yCopy:
+            #         try:
+            #             score = int(iterable)
+            #             break
+            #         except:
+            #             abi += iterable + ' '
+            #             y.remove(iterable)
+            #     yCopy = y.copy()
+            #     for iterable in yCopy[1:]:
+            #         try:
+            #             xp = int(iterable)
+            #             break
+            #         except:
+            #             specialty += iterable + ' '
+            #             y.remove(iterable)
+            #     try:
+            #         abiName = newChar.addAbility(abi,specialty.strip())
+            #     except:
+            #         abiName = newChar.addAbility(abi)
+            #     try:
+            #         newChar.abilities[abiName].setScore(score)
+            #     except:
+            #         None
+            #     try:
+            #         newChar.abilities[abiName].setXP(xp)
+            #     except:
+            #         None
             #print('arts = ' + contents[16])
             newChar.save(charType)
             await member.send('Character successfully saved!')
