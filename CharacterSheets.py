@@ -202,7 +202,6 @@ class CharacterSheet(commands.Cog):
             contents = msg.splitlines()
             #print('name = ' + contents[0])
             if await self.checkExist(ctx,contents[0]):
-                print('check 0')
                 await member.send('A character named ' + contents[0] + ' already exists on this server. Would you like to update that character? yes / no / check')
                 waiting = True
                 while waiting == True:
@@ -213,7 +212,13 @@ class CharacterSheet(commands.Cog):
                         contents = []
                     elif msg.content.lower() =='y' or msg.content.lower() == 'yes':
                         waiting = False
+                        print('check .5')
                         await member.send('Updating...')
+                        print('check 0')
+                        oldChar = Character(await self.basePath(ctx),'old')
+                        print('check 1')
+                        oldChar.load(contents[0])
+                        print('check 2')
                     elif msg.content.lower() =='c' or msg.content.lower() == 'check':
                         tempChar = Character(await self.basePath(ctx),contents[0])
                         tempChar.load(contents[0])
@@ -346,86 +351,11 @@ class CharacterSheet(commands.Cog):
                             newChar.techniquesXP[art] = xp
 
                         score
-
-
-            # #print('Characteristics =' + contents[1])
-            # char = contents[1].replace(',','')
-            # char = char.split(' ')
-            # charOrder=[0,1,4,5,2,3,6,7]
-            # #['int', 'per', 'str', 'sta', 'pre', 'com', 'dex', 'qik']
-            # charList=[]
-            # it = 0
-            # for x in char:
-            #     try:
-            #         #print(x)
-            #         int(x)
-            #         newChar.characteristics[newChar.charList[charOrder[it]]] = int(x)
-            #         it += 1
-            #     except:
-            #         None
-            # #print('Warping score = ' + contents[5])
-            # newChar.warpingScore = int(contents[5].split()[2])
-            # #print('Confidence = ' + contents[6])
-            # newChar.confidence = int(contents[6].split()[1])
-            # #print('Virtues and Flaws = ' + contents[7])
-            # l = contents[7][18:].split(',')
-            # #print(l)
-            # last = ''
-            # refVirt = Virtue('a')
-            # refFlaw = Flaw('a')
-            # for x in l:
-            #     if x[0] == '(' and x[-1] == ')':
-            #         if x[-2] == '2':
-            #             if refFlaw.validity(last) < refVirt.validity(last):
-            #                 newChar.addFlaw(last)
-            #             else:
-            #                 newChar.addVirtue(last)
-            #         else:
-            #             continue
-            #     if refFlaw.validity(x) < refVirt.validity(x):
-            #         #print(x)
-            #         newChar.addFlaw(x)
-            #     else:
-            #         #print(x)
-            #         newChar.addVirtue(x)
-            # #print('Abilities = ' + contents[15])
-            # abils = contents[15][11:].split(',')
-            # #print(abils)
-            # for x in abils:
-            #     y = x.replace('(','').replace(')','')
-            #     y = y.split()
-            #     abi = ''
-            #     specialty = ''
-            #     yCopy = y.copy()
-            #     for iterable in yCopy:
-            #         try:
-            #             score = int(iterable)
-            #             break
-            #         except:
-            #             abi += iterable + ' '
-            #             y.remove(iterable)
-            #     yCopy = y.copy()
-            #     for iterable in yCopy[1:]:
-            #         try:
-            #             xp = int(iterable)
-            #             break
-            #         except:
-            #             specialty += iterable + ' '
-            #             y.remove(iterable)
-            #     try:
-            #         abiName = newChar.addAbility(abi,specialty.strip())
-            #     except:
-            #         abiName = newChar.addAbility(abi)
-            #     try:
-            #         newChar.abilities[abiName].setScore(score)
-            #     except:
-            #         None
-            #     try:
-            #         newChar.abilities[abiName].setXP(xp)
-            #     except:
-            #         None
-            #print('arts = ' + contents[16])
-            newChar.save(charType)
+            try:
+                newChar.identifier = oldChar.identifier
+                newChar.save(charType)
+            except Exception as e:
+                print(e)
             await member.send('Character successfully saved!')
             await member.send(newChar.display())
             #print(newChar.display())

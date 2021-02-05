@@ -500,88 +500,96 @@ class Character():
         # type is the type of character which determines the save folder
         print('saving ' + self.name)
         try:
-            # Tries to access a saved character with the same name
-            existingPath = list(self.basePath.glob('**/' + self.name))[0]
-            infile = open(existingPath, 'rb')
-            savedChar = pickle.load(infile)
-            infile.close()
-
-            # Checks the identifier to see if we are saving an upadated version of the existing character.
-            if savedChar.identifier != self.identifier:
-                # Returns without saving if we aren't
-                return ('A different character with this name already exists')
-            else:
-                # updates type to whatever type existing character is
-                type = list(self.filepaths.keys())[list(self.filepaths.values()).index(existingPath.parents[0])]
-                pass
-
-        except:
-            # If we don't find an existing character, we need to create an identifier
             try:
-                # Checking to make sure that we have an identifier.txt, if not creates one
-                identF = open(self.filepaths['i'] / 'identifier.txt', 'x')
-                self.identifier = 0
-                identF.write(str(self.identifier))
-                identF.close()
+                # Tries to access a saved character with the same name
+                existingPath = list(self.basePath.glob('**/' + self.name))[0]
+                infile = open(existingPath, 'rb')
+                savedChar = pickle.load(infile)
+                infile.close()
 
-            except (FileExistsError):
-                # If we already have one, reads the current identifier, adds one and resaves it.
-                identF = open(self.filepaths['i'] / 'identifier.txt', 'r')
+                # Checks the identifier to see if we are saving an upadated version of the existing character.
+                if savedChar.identifier != self.identifier:
+                    # Returns without saving if we aren't
+                    print('identifier mismatch')
+                    return ('A different character with this name already exists')
+                else:
+                    # updates type to whatever type existing character is
+                    print('c1')
+                    type = list(self.filepaths.keys())[list(self.filepaths.values()).index(existingPath.parents[0])]
+                    pass
+
+            except Exception as e:
+                print(e)
+                # If we don't find an existing character, we need to create an identifier
                 try:
-                    ident = int(identF.read())
-                    self.identifier = ident + 1
-                    identF.close()
-                    identF = open(self.filepaths['i'] / 'identifier.txt', 'w')
-                    identF.write(str(self.identifier))
-                    identF.close()
-                except:
-                    # If for whatever reason the contents of identifier.txt have changed resets the number. Could potentially cause problems later, and should probably implement something to scan existing characters for identifiers and pull the highest number.
+                    # Checking to make sure that we have an identifier.txt, if not creates one
+                    identF = open(self.filepaths['i'] / 'identifier.txt', 'x')
                     self.identifier = 0
                     identF.write(str(self.identifier))
                     identF.close()
 
-        try:
-            saveFile = open(self.filepaths[type] / self.name, 'wb')
-        except:
-            print('Character not saved, likely invalid type')
-            return ('Character not saved, likely invalid type')
-        pickle.dump(self, saveFile)
-        saveFile.close()
-        for x in self.abilities:
-            p = self.filepaths[type] / ('info.' + self.name)
-            try:
-                #	print(p)
-                p.mkdir(parents=True, exist_ok=True)
-            #	print('made directory')
-            except:
-                None
-            try:
-                saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('ability.' + x), 'wb')
-            except Exception as e:
-                print(e)
-            pickle.dump(self.abilities[x], saveFile)
-        for x in self.virtues:
-            p = self.filepaths[type] / ('info.' + self.name)
-            try:
-                #	print(p)
-                p.mkdir(parents=True, exist_ok=True)
-            #	print('made directory')
-            except:
-                None
-            saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('virute.' + x), 'wb')
-            pickle.dump(self.virtues[x], saveFile)
-        for x in self.flaws:
-            p = self.filepaths[type] / ('info.' + self.name)
-            try:
-                #	print(p)
-                p.mkdir(parents=True, exist_ok=True)
-            #	print('made directory')
-            except:
-                None
-            saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('flaw.' + x), 'wb')
-            pickle.dump(self.flaws[x], saveFile)
+                except (FileExistsError):
+                    # If we already have one, reads the current identifier, adds one and resaves it.
+                    identF = open(self.filepaths['i'] / 'identifier.txt', 'r')
+                    try:
+                        ident = int(identF.read())
+                        self.identifier = ident + 1
+                        identF.close()
+                        identF = open(self.filepaths['i'] / 'identifier.txt', 'w')
+                        identF.write(str(self.identifier))
+                        identF.close()
+                    except:
+                        print('identifier file not found')
+                        # If for whatever reason the contents of identifier.txt have changed resets the number. Could potentially cause problems later, and should probably implement something to scan existing characters for identifiers and pull the highest number.
+                        self.identifier = 0
+                        identF.write(str(self.identifier))
+                        identF.close()
 
-        # print('Character saved')
+            try:
+                saveFile = open(self.filepaths[type] / self.name, 'wb')
+            except:
+                print('Character not saved, likely invalid type')
+                return ('Character not saved, likely invalid type')
+            print('c2')
+            pickle.dump(self, saveFile)
+            saveFile.close()
+            print('c3')
+            for x in self.abilities:
+                p = self.filepaths[type] / ('info.' + self.name)
+                try:
+                    #	print(p)
+                    p.mkdir(parents=True, exist_ok=True)
+                #	print('made directory')
+                except:
+                    None
+                try:
+                    saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('ability.' + x), 'wb')
+                except Exception as e:
+                    print(e)
+                pickle.dump(self.abilities[x], saveFile)
+            for x in self.virtues:
+                p = self.filepaths[type] / ('info.' + self.name)
+                try:
+                    #	print(p)
+                    p.mkdir(parents=True, exist_ok=True)
+                #	print('made directory')
+                except:
+                    None
+                saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('virute.' + x), 'wb')
+                pickle.dump(self.virtues[x], saveFile)
+            for x in self.flaws:
+                p = self.filepaths[type] / ('info.' + self.name)
+                try:
+                    #	print(p)
+                    p.mkdir(parents=True, exist_ok=True)
+                #	print('made directory')
+                except:
+                    None
+                saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('flaw.' + x), 'wb')
+                pickle.dump(self.flaws[x], saveFile)
+        except Exception as e:
+            print(e)
+        print('Character saved')
         return ('Character saved')
 
     # print(self.characteristics)
@@ -602,17 +610,20 @@ class Character():
         except:
             print('load failed, provided pickle was not a character')
             return ('load failed, provided pickle was not a character')
-        self.name = char.name
-        self.characteristics = char.characteristics
-        self.identifier = char.identifier
-        self.warpingScore = char.warpingScore
-        self.confidence = char.confidence
-        self.covenant = char.covenant
-        self.age = char.age
-        self.techniques = char.techniques
-        self.techniquesXP = char.techniquesXP
-        self.forms = char.forms
-        self.formsXP = char.formsXP
+        try:
+            self.name = char.name
+            self.characteristics = char.characteristics
+            self.identifier = char.identifier
+            self.warpingScore = char.warpingScore
+            self.confidence = char.confidence
+            self.covenant = char.covenant
+            self.age = char.age
+            self.techniques = char.techniques
+            self.techniquesXP = char.techniquesXP
+            self.forms = char.forms
+            self.formsXP = char.formsXP
+        except Exception as e:
+            print(e)
         for x in list(infoF.glob('*')):
             try:
                 file = open(x, 'rb')
