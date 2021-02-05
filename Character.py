@@ -605,6 +605,14 @@ class Character():
         self.name = char.name
         self.characteristics = char.characteristics
         self.identifier = char.identifier
+        self.warpingScore = char.warpingScore
+        self.confidence = char.confidence
+        self.covenant = char.covenant
+        self.age = char.age
+        self.techniques = char.techniques
+        self.techniquesXP = char.techniquesXP
+        self.forms = char.forms
+        self.formsXP = char.formsXP
         for x in list(infoF.glob('*')):
             try:
                 file = open(x, 'rb')
