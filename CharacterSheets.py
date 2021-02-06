@@ -230,8 +230,10 @@ class CharacterSheet(commands.Cog):
 
             print('check 0.5')
             newChar = Character(await self.basePath(ctx),contents[0])
-            if oldChar != None:
+            try:
                 newChar.identifier = oldChar.identifier
+            except:
+                None
             for line in contents:
                 title = line.split(':')[0]
                 title = title.strip()
