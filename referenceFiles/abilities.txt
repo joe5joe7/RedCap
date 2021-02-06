@@ -1,21 +1,25 @@
-Order of Hermes Lore
-Lore about the Order of Hermes
-(Arcane)
+ORDER OF HERMES LORE*
+Knowledge of the legends, history, structure, operation, and goals of the specified organization. Organizations can be as large as the
+Church, or as small as a local craft guild. The
+smaller the organization, the more detailed
+your knowledge. Specialties: personalities, history, politics.
+(General)
 
 HOUSE CRIAMON LORE*
 Lore about House Criamon
+Specialties: initiating others, initiating self, altering initiations.
 (Arcane)
 
 LATIN*
 A langauge skill covering the usage of Latin.
 Specialties:poetry, prose, specific dialects,
-expansive vocabulary, specific technical vocabulary, slang, storytelling
+expansive vocabulary, specific technical vocabulary, slang, storytelling.
 (Academic)
 
 FRENCH*
 A language skill covering the usage of French.
 Specialties:poetry, prose, specific dialects,
-expansive vocabulary, specific technical vocabulary, slang, storytelling
+expansive vocabulary, specific technical vocabulary, slang, storytelling.
 (General)
 
 (AREA) LORE*
