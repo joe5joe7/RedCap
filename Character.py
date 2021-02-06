@@ -5,6 +5,7 @@ from glob import glob
 import random
 import math
 import Levenshtein
+import shutil
 import re
 
 
@@ -554,6 +555,7 @@ class Character():
             pickle.dump(self, saveFile)
             saveFile.close()
             print('c3')
+            shutil.rmtree(self.filepaths[type]/('info.'+self.name))
             for x in self.abilities:
                 p = self.filepaths[type] / ('info.' + self.name)
                 try:

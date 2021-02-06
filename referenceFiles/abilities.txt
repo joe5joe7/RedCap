@@ -1,3 +1,11 @@
+Order of Hermes Lore
+Lore about the Order of Hermes
+(Arcane)
+
+HOUSE CRIAMON LORE*
+Lore about House Criamon
+(Arcane)
+
 LATIN*
 A langauge skill covering the usage of Latin.
 Specialties:poetry, prose, specific dialects,
@@ -8,6 +16,7 @@ FRENCH*
 A language skill covering the usage of French.
 Specialties:poetry, prose, specific dialects,
 expansive vocabulary, specific technical vocabulary, slang, storytelling
+(General)
 
 (AREA) LORE*
 Knowledge of one particular region,
