@@ -219,6 +219,7 @@ class CharacterSheet(commands.Cog):
                         print('check 1')
                         oldChar.load(contents[0])
                         print('check 2')
+
                     elif msg.content.lower() =='c' or msg.content.lower() == 'check':
                         tempChar = Character(await self.basePath(ctx),contents[0])
                         tempChar.load(contents[0])
@@ -229,6 +230,8 @@ class CharacterSheet(commands.Cog):
 
             print('check 0.5')
             newChar = Character(await self.basePath(ctx),contents[0])
+            if oldChar != None:
+                newChar.identifier = oldChar.identifier
             for line in contents:
                 title = line.split(':')[0]
                 title = title.strip()
@@ -352,7 +355,6 @@ class CharacterSheet(commands.Cog):
 
                         score
             try:
-                newChar.identifier = oldChar.identifier
                 newChar.save(charType)
             except Exception as e:
                 print(e)
