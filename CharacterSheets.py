@@ -15,8 +15,9 @@ from Tools import Tools
 import re
 
 
-
-
+#TODO
+# add more aliases for lowercased commands
+# add association for loadchar
 
 
 

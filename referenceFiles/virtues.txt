@@ -346,11 +346,16 @@ grievous mishap robbed you of it altogether. You
 may still work for your former master or for the
 covenant in some other capacity. Magi welcome
 you and have compassion for you — those who
+are given to such emotions, anyway. You may
+learn Academic and Arcane Abilities during
+character creation, and you are familiar with the
+lives of magi. You may not have The Gift, but if
+your Gift was not completely destroyed, you
+may have some Supernatural Abilities. You may
+learn Magic Theory and serve a magus as a laboratory assistant. The Wealthy Virtue and Poor
+Flaw affect you normally. This Virtue is available
+to male and female characters.
 
-in the corresponding Ability. You may choose a
-different special ability for every spell you
-have. Further, all experience points you put
-into Spell Mastery Abilities are doubled.
 FLEXIBLE FORMULAIC MAGIC
 Major, Hermetic
 You can vary the effects of formulaic
@@ -371,15 +376,7 @@ original picture, and have the potential to be a
 great artist. You get a +3 bonus on all rolls to
 create a new work of art.
 
-are given to such emotions, anyway. You may
-learn Academic and Arcane Abilities during
-character creation, and you are familiar with the
-lives of magi. You may not have The Gift, but if
-your Gift was not completely destroyed, you
-may have some Supernatural Abilities. You may
-learn Magic Theory and serve a magus as a laboratory assistant. The Wealthy Virtue and Poor
-Flaw affect you normally. This Virtue is available
-to male and female characters.
+
 FAMOUS
 Minor, General
 You have a good Reputation of level 4.
@@ -394,6 +391,10 @@ FLAWLESS MAGIC
 Major, Hermetic
 You automatically master every spell that
 you learn. All your spells start with a score of 1
+in the corresponding Ability. You may choose a
+different special ability for every spell you
+have. Further, all experience points you put
+into Spell Mastery Abilities are doubled.
 FREE STUDY
 Minor, Hermetic
 You are better at figuring things out for

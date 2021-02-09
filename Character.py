@@ -8,6 +8,32 @@ import Levenshtein
 import shutil
 import re
 
+#Todo
+#give virtues character creation ability permissions:
+#ARCANE LORE gives perm for arcane abilities and additional 50 experience points, which must be spent on Arcane Abilities.
+#EDUCATED additional 50 experience points, which must be spent on Latin and Artes Liberales.
+#ENTRANCEMENT gives entrancement 1
+#GREAT increases a characteristic by 1
+#IMPROVED CHARACTERISTICS increases characteristic points by 3
+#LARGE size +1
+#MENDICANT FRIAR may take acedemic abilities
+#PREMONITIONS gives Premonitions 1
+#PRIVILEGED UPBRINGING You have an additional 50 experience points, which may be spent on General, Academic, or Martial Abilities
+#SECOND SIGHT gives Second Sight 1
+# SHAPESHIFTER gives Shapeshift 1
+#STUDENT OF (REALM) gives You may take that Lore at character generation even if you cannot learn other Arcane Abilities
+#WARRIOR May aquire martial abliities during character gen
+#WELL-TRAVELED You have fifty bonus experience points to spend on living languages, Area Lores, and Bargain, Carouse, Charm, Etiquette, Folk Ken, or Guile.
+#WILDERNESS SENSE gives wilderness sense 1
+# WISE ONE may take either Arcane or Academic Abilities, but not both, at character creation.
+
+
+#Affinity abilities increase xp spent on certain arts/abilities during character creation
+#MASTERED SPELLS Gives 50 xp on spells known
+
+#Divide virtues (and possibly flaws) into classifications. IE: Character Gen, Roll effecting, Occasional Modifier, RP
+# Within character gen, there appears to be a limited number of things virtues do. Give permission to get certain skills, give xp points limited to certain skills, or modify xp spent on certain skills.
+# maybe .addXPcharGen which checks for limitations like not having requisit virtues?
 
 class VirtueFlaw():
     def __init__(self,speciality = ''):
@@ -555,7 +581,10 @@ class Character():
             pickle.dump(self, saveFile)
             saveFile.close()
             print('c3')
-            shutil.rmtree(self.filepaths[type]/('info.'+self.name))
+            try:
+                shutil.rmtree(self.filepaths[type]/('info.'+self.name))
+            except:
+                None
             for x in self.abilities:
                 p = self.filepaths[type] / ('info.' + self.name)
                 try:
@@ -602,57 +631,60 @@ class Character():
         name = name.capitalize()
         #print(name)
         #print((list(self.basePath.glob('**/' + name))[0]))
-        infile = open(list(self.basePath.glob('**/' + name))[0], 'rb')
-        char = pickle.load(infile)
-        infoF = Path(list(self.basePath.glob('**/' + name))[0]).parent / ('info.' + char.name)
-        infile.close()
-        #	print('successfully unpickled')
         try:
-            char.isCharacter()
-        except:
-            print('load failed, provided pickle was not a character')
-            return ('load failed, provided pickle was not a character')
-        try:
-            self.name = char.name
-            self.characteristics = char.characteristics
-            self.identifier = char.identifier
-            self.warpingScore = char.warpingScore
-            self.confidence = char.confidence
-            self.covenant = char.covenant
-            self.age = char.age
-            self.techniques = char.techniques
-            self.techniquesXP = char.techniquesXP
-            self.forms = char.forms
-            self.formsXP = char.formsXP
+            infile = open(list(self.basePath.glob('**/' + name))[0], 'rb')
+            char = pickle.load(infile)
+            infoF = Path(list(self.basePath.glob('**/' + name))[0]).parent / ('info.' + char.name)
+            infile.close()
+            #	print('successfully unpickled')
+            try:
+                char.isCharacter()
+            except:
+                print('load failed, provided pickle was not a character')
+                return ('load failed, provided pickle was not a character')
+            try:
+                self.name = char.name
+                self.characteristics = char.characteristics
+                self.identifier = char.identifier
+                self.warpingScore = char.warpingScore
+                self.confidence = char.confidence
+                self.covenant = char.covenant
+                self.age = char.age
+                self.techniques = char.techniques
+                self.techniquesXP = char.techniquesXP
+                self.forms = char.forms
+                self.formsXP = char.formsXP
+            except Exception as e:
+                print(e)
+            for x in list(infoF.glob('*')):
+                try:
+                    file = open(x, 'rb')
+                    try:
+                        infoTemp = pickle.load(file)
+                    except Exception as e:
+                        print(e)
+
+                    try:
+                        if infoTemp.isAbility():
+                            self.abilities[infoTemp.name] = infoTemp
+                    except:
+                        None
+
+                    try:
+                        if infoTemp.isVirtue():
+                            self.virtues[infoTemp.name] = infoTemp
+                    except:
+                        None
+
+                    try:
+                        if infoTemp.isFlaw():
+                            self.flaws[infoTemp.name] = infoTemp
+                    except:
+                        None
+                except:
+                    None
         except Exception as e:
             print(e)
-        for x in list(infoF.glob('*')):
-            try:
-                file = open(x, 'rb')
-                try:
-                    infoTemp = pickle.load(file)
-                except Exception as e:
-                    print(e)
-
-                try:
-                    if infoTemp.isAbility():
-                        self.abilities[infoTemp.name] = infoTemp
-                except:
-                    None
-
-                try:
-                    if infoTemp.isVirtue():
-                        self.virtues[infoTemp.name] = infoTemp
-                except:
-                    None
-
-                try:
-                    if infoTemp.isFlaw():
-                        self.flaws[infoTemp.name] = infoTemp
-                except:
-                    None
-            except:
-                None
 
         return (self.name + ' successfully loaded')
 
