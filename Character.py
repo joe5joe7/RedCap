@@ -6,37 +6,40 @@ import random
 import math
 import Levenshtein
 import shutil
+import spacy
 import re
+import numpy
 
-#Todo
-#give virtues character creation ability permissions:
-#ARCANE LORE gives perm for arcane abilities and additional 50 experience points, which must be spent on Arcane Abilities.
-#EDUCATED additional 50 experience points, which must be spent on Latin and Artes Liberales.
-#ENTRANCEMENT gives entrancement 1
-#GREAT increases a characteristic by 1
-#IMPROVED CHARACTERISTICS increases characteristic points by 3
-#LARGE size +1
-#MENDICANT FRIAR may take acedemic abilities
-#PREMONITIONS gives Premonitions 1
-#PRIVILEGED UPBRINGING You have an additional 50 experience points, which may be spent on General, Academic, or Martial Abilities
-#SECOND SIGHT gives Second Sight 1
+
+# Todo
+# give virtues character creation ability permissions:
+# ARCANE LORE gives perm for arcane abilities and additional 50 experience points, which must be spent on Arcane Abilities.
+# EDUCATED additional 50 experience points, which must be spent on Latin and Artes Liberales.
+# ENTRANCEMENT gives entrancement 1
+# GREAT increases a characteristic by 1
+# IMPROVED CHARACTERISTICS increases characteristic points by 3
+# LARGE size +1
+# MENDICANT FRIAR may take acedemic abilities
+# PREMONITIONS gives Premonitions 1
+# PRIVILEGED UPBRINGING You have an additional 50 experience points, which may be spent on General, Academic, or Martial Abilities
+# SECOND SIGHT gives Second Sight 1
 # SHAPESHIFTER gives Shapeshift 1
-#STUDENT OF (REALM) gives You may take that Lore at character generation even if you cannot learn other Arcane Abilities
-#WARRIOR May aquire martial abliities during character gen
-#WELL-TRAVELED You have fifty bonus experience points to spend on living languages, Area Lores, and Bargain, Carouse, Charm, Etiquette, Folk Ken, or Guile.
-#WILDERNESS SENSE gives wilderness sense 1
+# STUDENT OF (REALM) gives You may take that Lore at character generation even if you cannot learn other Arcane Abilities
+# WARRIOR May aquire martial abliities during character gen
+# WELL-TRAVELED You have fifty bonus experience points to spend on living languages, Area Lores, and Bargain, Carouse, Charm, Etiquette, Folk Ken, or Guile.
+# WILDERNESS SENSE gives wilderness sense 1
 # WISE ONE may take either Arcane or Academic Abilities, but not both, at character creation.
 
 
-#Affinity abilities increase xp spent on certain arts/abilities during character creation
-#MASTERED SPELLS Gives 50 xp on spells known
+# Affinity abilities increase xp spent on certain arts/abilities during character creation
+# MASTERED SPELLS Gives 50 xp on spells known
 
-#Divide virtues (and possibly flaws) into classifications. IE: Character Gen, Roll effecting, Occasional Modifier, RP
+# Divide virtues (and possibly flaws) into classifications. IE: Character Gen, Roll effecting, Occasional Modifier, RP
 # Within character gen, there appears to be a limited number of things virtues do. Give permission to get certain skills, give xp points limited to certain skills, or modify xp spent on certain skills.
 # maybe .addXPcharGen which checks for limitations like not having requisit virtues?
 
 class VirtueFlaw():
-    def __init__(self,speciality = ''):
+    def __init__(self, speciality=''):
         self.name = ''
         self.description = ''
         self.value = ''
@@ -47,15 +50,15 @@ class VirtueFlaw():
         self.virtuesLib = {}
         self.referencePath = Path.cwd() / 'referenceFiles'
         self.speciality = speciality
+        self.flags = []
         try:
             self.referencePath.mkdir(parents=True)
         except:
             pass
         similarity = 100
 
-    def addSpecialty(self,speciality):
+    def addSpecialty(self, speciality):
         self.speciality = speciality
-
 
     def loadReference(self):
         with open(self.referenceFile, 'r', encoding='utf-8') as file:
@@ -146,7 +149,8 @@ class VirtueFlaw():
 
     def summary(self):
         if self.speciality != '':
-            return (self.name + '\n' + self.value + '(' + self.speciality + '), ' + self.type + '\n Description: ' + self.description)
+            return (
+                    self.name + '\n' + self.value + '(' + self.speciality + '), ' + self.type + '\n Description: ' + self.description)
         else:
             return (self.name + '\n' + self.value + ', ' + self.type + '\n Description: ' + self.description)
 
@@ -322,7 +326,7 @@ class Ability():
 
 
 class Character():
-    def __init__(self, basePath= (Path.cwd() / 'servers' / 'unClassified'), name='default'):
+    def __init__(self, basePath=(Path.cwd() / 'servers' / 'unClassified'), name='default'):
         self.name = name
         self.basePath = basePath
         tempGrogs = basePath / 'characters' / 'tempGrogs'
@@ -396,8 +400,8 @@ class Character():
             'te': None,
             'vi': None
         }
-        self.techniqueList = ['cr','in','mu','pe','re']
-        self.formList = ['an','aq','au','co','he','ig','im','me','te','vi']
+        self.techniqueList = ['cr', 'in', 'mu', 'pe', 're']
+        self.formList = ['an', 'aq', 'au', 'co', 'he', 'ig', 'im', 'me', 'te', 'vi']
         self.charList = ['int', 'per', 'str', 'sta', 'pre', 'com', 'dex', 'qik']
         self.scorePoints = {
             -3: -6, -2: -3, -1: -1, 0: 0, 1: 1, 2: 3, 3: 6
@@ -450,6 +454,31 @@ class Character():
         # print('current spent points: ' + str(self.checkPoints()))
         return (self.characteristics)
 
+    def genSimStats(self,*args):
+        points = 7
+        charistics = [('Intelligence','int'),('Perception','per'),('Strength','str'),('Stamina','sta'),('Presence','pre'),('Communication','com'),('Dexterity','dex'),('Quickness','qik')]
+        keyWord = ''
+        print(args)
+        for word in args:
+            keyWord += word + ' '
+        keyWord = keyWord.strip()
+
+        nlp = spacy.load('en_core_web_lg')
+        keyToken = nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
+        charisticList = []
+        weight = []
+        for x in range(len(charistics)):
+            charToken = nlp(charistics[x][0])
+            sim = keyToken.similarity(charToken)
+            charisticList.append((sim,charistics[x][1]))
+        charisticList.sort()
+        print(charisticList[0][1] + ' ' + charisticList[1][1])
+        self.genStats(charisticList[0][1] + ' ' + charisticList[1][1])
+
+
+
+
+
     def genAbilities(self, xp):
         while xp > 0:
             change = random.randint(1, int(xp / 2) + 1)
@@ -460,35 +489,140 @@ class Character():
             self.abilities[randAbility['name']] = Ability(randAbility['name'])
             self.abilities[randAbility['name']].addXp(change)
 
-    def genVirtuesFlaws(self, points):
+    def genVirtuesFlawsGrog(self, *args):
+        points = 3
         virtuePoints = 0
+        # generate a list of virtues and flaws based on supplied phrase
+        # parse args into single string
+        keyWord = ''
+        for word in args:
+            keyWord += word + ' '
+        keyWord = keyWord.strip()
+
+        nlp = spacy.load('en_core_web_lg')
+        keyToken = nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
+        v = Virtue('placeholder')
+        virtRefList = list(v.virtuesLib.values())
+        virtList = []
+        weight = []
+        for virtue in virtRefList:
+            virtToken = nlp(virtue['name'])
+            sim = keyToken.similarity(virtToken)
+            weight.append(sim)
+            virtList.append(virtue['name'])
+        c = weight.copy()
+        c2 = c.copy()
+        popped = 0
+        for x in range(len(c)):
+            if c[x] <= 0:
+                c2.pop(x - popped)
+                virtList.pop(x - popped)
+                popped += 1
+
+        c = [x * 100.0 for x in c2]
+        c2 = [pow(x, 10.0) for x in c]
+        total = sum(c2)
+        weight = [x / total for x in c2]
+
+        socialStatus = False
         while virtuePoints < points:
-            print(virtuePoints)
-            randVirtue = random.choice(list(self.referenceVirtue.virtuesLib.values()))
-            print(randVirtue['name'] + randVirtue['value'])
-            if randVirtue['value'] == 'Major':
+            skip = False
+            choice = numpy.random.choice(virtList, p=weight)
+            if Virtue(choice).type != 'Social Status' and socialStatus is False:
+                continue
+            num = virtList.index(choice)
+            virtList.pop(num)
+            weight.pop(num)
+            total = sum(weight)
+            c2 = weight.copy()
+            weight = [x / total for x in c2]
+            randVirtue = Virtue(choice)
+            print(randVirtue.name + ' ' + randVirtue.type)
+            if randVirtue.type == 'Social Status':
+                for virt in list(self.virtues.keys()):
+                    if self.virtues[virt].type == 'Social Status':
+                        print('Already have a social status, ')
+                        skip = True
+                    else:
+                        print('Social status set to ' + randVirtue.name)
+                        socialStatus = True
+            if skip:
+                continue
+            if randVirtue.type == 'Social Status':
+                socialStatus = True
+            if randVirtue.type == 'Hermetic':
+                continue
+            if randVirtue.name == 'The Gift':
+                continue
+            else:
+                None
+            if randVirtue.value == 'Major':
                 if (virtuePoints + 3) <= points:
                     virtuePoints += 3
-                    self.virtues[randVirtue['name']] = Virtue(randVirtue['name'])
+                    self.virtues[randVirtue.name] = randVirtue
                 else:
                     continue
-            elif randVirtue['value'] == 'Minor':
+
+            elif randVirtue.value == 'Minor':
                 virtuePoints += 1
-                self.virtues[randVirtue['name']] = Virtue(randVirtue['name'])
+                self.virtues[randVirtue.name] = randVirtue
+            elif randVirtue.value == 'Free':
+                self.virtues[randVirtue.name] = randVirtue
+            print('Reached end of loop')
+
         flawPoints = 0
+        f = Flaw('placeholder')
+        FlawRefList = list(f.virtuesLib.values())
+        FlawList = []
+        weight = []
+        for flaw in FlawRefList:
+            flawToken = nlp(flaw['name'])
+            sim = keyToken.similarity(flawToken)
+            weight.append(sim)
+            FlawList.append(flaw['name'])
+        c = weight.copy()
+        c2 = c.copy()
+        popped = 0
+        for x in range(len(c)):
+            if c[x] <= 0:
+                c2.pop(x - popped)
+                FlawList.pop(x - popped)
+                popped += 1
+
+        c = [x * 100.0 for x in c2]
+        c2 = [pow(x, 10.0) for x in c]
+        total = sum(c2)
+        weight = [x / total for x in c2]
+
         while flawPoints < points:
-            print(flawPoints)
-            randFlaw = random.choice(list(self.referenceFlaw.virtuesLib.values()))
-            print(randFlaw['name'] + randFlaw['value'])
-            if randFlaw['value'] == 'Major':
+            choice = numpy.random.choice(FlawList, p=weight)
+            num = FlawList.index(choice)
+            FlawList.pop(num)
+            weight.pop(num)
+            total = sum(weight)
+            c2 = weight.copy()
+            weight = [x / total for x in c2]
+
+            randFlaw = Flaw(choice)
+            if randFlaw.type == 'Story':
+                continue
+            if randFlaw.type == 'Hermetic':
+                continue
+            if randFlaw.type == 'Personality':
+                for fla in self.flaws:
+                    if self.flaws[fla].type == 'Personality':
+                        continue
+            if randFlaw.value == 'Major':
                 if (flawPoints + 3) <= points:
                     flawPoints += 3
-                    self.flaws[randFlaw['name']] = Flaw(randFlaw['name'])
+                    self.flaws[randFlaw.name] = randFlaw
                 else:
                     continue
-            elif randFlaw['value'] == 'Minor':
+            elif randFlaw.value == 'Minor':
                 flawPoints += 1
-                self.flaws[randFlaw['name']] = Flaw(randFlaw['name'])
+                self.flaws[randFlaw.name] = randFlaw
+            elif randFlaw.value == 'Free':
+                self.flaws[randFlaw.name] = randFlaw
 
     def printVirtuesFlaws(self):
         print('Virtues: \n')
@@ -503,13 +637,13 @@ class Character():
             print(x.summary())
             print('\n \n \n')
 
-    def addVirtue(self, name,specialty = ''):
-        tempVir = Virtue(name,specialty)
+    def addVirtue(self, name, specialty=''):
+        tempVir = Virtue(name, specialty)
         self.virtues[tempVir.name] = tempVir
         return tempVir.name
 
-    def addFlaw(self, name,specialty = ''):
-        tempFlaw = Flaw(name,specialty)
+    def addFlaw(self, name, specialty=''):
+        tempFlaw = Flaw(name, specialty)
         self.flaws[tempFlaw.name] = tempFlaw
         return tempFlaw.name
 
@@ -582,7 +716,7 @@ class Character():
             saveFile.close()
             print('c3')
             try:
-                shutil.rmtree(self.filepaths[type]/('info.'+self.name))
+                shutil.rmtree(self.filepaths[type] / ('info.' + self.name))
             except:
                 None
             for x in self.abilities:
@@ -629,8 +763,8 @@ class Character():
         #	print('using path ' + str(Path.cwd() / 'characters' / '**' / name))
         # p = list(Path.cwd().glob('**/'+name))[0]
         name = name.capitalize()
-        #print(name)
-        #print((list(self.basePath.glob('**/' + name))[0]))
+        # print(name)
+        # print((list(self.basePath.glob('**/' + name))[0]))
         try:
             infile = open(list(self.basePath.glob('**/' + name))[0], 'rb')
             char = pickle.load(infile)

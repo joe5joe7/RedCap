@@ -13,7 +13,7 @@ import names
 import DiscordStyle
 from Tools import Tools
 import re
-
+import spacy
 
 #TODO
 # add more aliases for lowercased commands
@@ -53,22 +53,30 @@ class CharacterSheet(commands.Cog):
 
     @commands.command(name='genGrog',help='Generates a random grog.')
     async def genGrog(self,ctx,*args):
-        focus = []
-        #print(args)
-        if self.mage & set(args): focus.extend(['int','sta'])
-        if self.warrior & set(args): focus.extend(['str','dex'])
-        if self.farmer & set(args): focus.extend(['sta'])
-        if self.priest & set(args): focus.extend(['pre','com'])
-
-        #print(focus)
-        name=names.get_first_name()
-        
+        None
+        #first step is to generate a name
+        name = names.get_first_name()
         grog=Character(await self.basePath(ctx),name)
-        grog.genStats(*focus)
+        grog.genVirtuesFlawsGrog(*args)
+        grog.genSimStats()
         grog.genAbilities(200)
-        grog.genVirtuesFlaws(3)
+
+        # focus = []
+        # #print(args)
+        # if self.mage & set(args): focus.extend(['int','sta'])
+        # if self.warrior & set(args): focus.extend(['str','dex'])
+        # if self.farmer & set(args): focus.extend(['sta'])
+        # if self.priest & set(args): focus.extend(['pre','com'])
+        #
+        # #print(focus)
+        # name=names.get_first_name()
+        #
+        # grog=Character(await self.basePath(ctx),name)
+        # grog.genStats(*focus)
+        # grog.genAbilities(200)
+        # grog.genVirtuesFlaws(3)
         await ctx.send(DiscordStyle.style(grog.display(),self.style))
-        grog.save('tg')
+        # grog.save('tg')
 
     @commands.command(name='loadChar',help='loads a previously generated character.')
     async def loadChar(self,ctx,name: str):

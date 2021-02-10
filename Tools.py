@@ -31,6 +31,8 @@ class Tools(commands.Cog):
 
         self.updateMemberList()
 
+
+
     def basePath(self,ctx):
         if ctx.guild != None:
             return(Path.cwd()/'servers'/str(ctx.guild.id))
