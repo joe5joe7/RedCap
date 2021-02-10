@@ -31,6 +31,7 @@ class CharacterSheet(commands.Cog):
         self.priest={'priest','monk','chaplain'}
         self.style='blue'
         self.associations = {}
+        self.nlp = spacy.load('en_core_web_lg')
 
     
     async def basePath(self,ctx,msg = False):
@@ -55,12 +56,19 @@ class CharacterSheet(commands.Cog):
     async def genGrog(self,ctx,*args):
         None
         #first step is to generate a name
-        name = names.get_first_name()
-        grog=Character(await self.basePath(ctx),name)
-        grog.genVirtuesFlawsGrog(*args)
-        grog.genSimStats()
-        grog.genAbilities(200)
-
+        print('genning grog')
+        try:
+            print('c-1')
+            name = names.get_first_name()
+            print('c0')
+            grog=Character(self.nlp,await self.basePath(ctx),name)
+            print('c1')
+            grog.genVirtuesFlawsGrog(*args)
+            print('c2')
+            grog.genSimStats()
+            grog.genAbilities(200)
+        except Exception as e:
+            print(e)
         # focus = []
         # #print(args)
         # if self.mage & set(args): focus.extend(['int','sta'])
@@ -71,7 +79,7 @@ class CharacterSheet(commands.Cog):
         # #print(focus)
         # name=names.get_first_name()
         #
-        # grog=Character(await self.basePath(ctx),name)
+        # grog=Character(self.nlp,await self.basePath(ctx),name)
         # grog.genStats(*focus)
         # grog.genAbilities(200)
         # grog.genVirtuesFlaws(3)
@@ -81,14 +89,14 @@ class CharacterSheet(commands.Cog):
     @commands.command(name='loadChar',help='loads a previously generated character.')
     async def loadChar(self,ctx,name: str):
        # print('attempting to load ' + name)
-        temp = Character(await self.basePath(ctx),'temp')
+        temp = Character(self.nlp,await self.basePath(ctx),'temp')
         temp.load(name)
        # print(temp.display())
         await ctx.send(DiscordStyle.style(temp.display(),self.style))
 
     @commands.command(name='charList',help='Gives a list of available grogs')
     async def charList(self,ctx):
-        a = Character(await self.basePath(ctx))
+        a = Character(self.nlp,await self.basePath(ctx))
         result = ''
         try:
             p = await self.basePath(ctx)/'characters'
@@ -107,7 +115,7 @@ class CharacterSheet(commands.Cog):
         await member.send('What is your character\'s name?')
         msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
         content = msg.content
-        customCharacter = Character(await self.basePath(ctx),str(content))
+        customCharacter = Character(self.nlp,await self.basePath(ctx),str(content))
         await member.send('Your character is named ' + customCharacter.name + '.')
         await member.send('What are your characters characteristics? Please copy and paste my next message and edit the numbers for your stats. Make sure to leave a space on either side of each number. I\'ll verify they add up for you.')
         char = ''
@@ -176,7 +184,7 @@ class CharacterSheet(commands.Cog):
         await member.send(customCharacter.display())
 
     async def checkExist(self,ctx,name):
-        tempChar = Character(await self.basePath(ctx),'temp')
+        tempChar = Character(self.nlp,await self.basePath(ctx),'temp')
         try:
             tempChar.load(name)
             return True
@@ -224,13 +232,13 @@ class CharacterSheet(commands.Cog):
                         print('check .5')
                         await member.send('Updating...')
                         print('check 0')
-                        oldChar = Character(await self.basePath(ctx),'old')
+                        oldChar = Character(self.nlp,await self.basePath(ctx),'old')
                         print('check 1')
                         oldChar.load(contents[0])
                         print('check 2')
 
                     elif msg.content.lower() =='c' or msg.content.lower() == 'check':
-                        tempChar = Character(await self.basePath(ctx),contents[0])
+                        tempChar = Character(self.nlp,await self.basePath(ctx),contents[0])
                         tempChar.load(contents[0])
                         await member.send(tempChar.display())
                         await  member.send('\n \n Is this the character you would like to update? Please enter y / n')
@@ -238,7 +246,7 @@ class CharacterSheet(commands.Cog):
                         await member.send('Please enter yes, no, or check')
 
             print('check 0.5')
-            newChar = Character(await self.basePath(ctx),contents[0])
+            newChar = Character(self.nlp,await self.basePath(ctx),contents[0])
             try:
                 newChar.identifier = oldChar.identifier
             except:

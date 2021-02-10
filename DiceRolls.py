@@ -10,6 +10,7 @@ import pickle
 import Character
 from Character import Character
 import Levenshtein
+import spacy
 
 style = 'blue'
 from Tools import Tools
@@ -21,6 +22,7 @@ class DiceRolls(commands.Cog):
         self.bot = bot
         self.__last_member = None
         self.associations = {}
+        self.nlp = spacy.load('en_core_web_lg')
 
     def basePath(self, ctx):
         if ctx.guild != None:
@@ -41,7 +43,7 @@ class DiceRolls(commands.Cog):
             return (Path.cwd() / 'servers' / 'unClassified')
 
     def loadChar(self, ctx, *args):
-        roller = Character(self.basePath(ctx))
+        roller = Character(self.nlp,self.basePath(ctx))
         #   print(args)
         for x in (args):
             try:
@@ -65,7 +67,7 @@ class DiceRolls(commands.Cog):
     @commands.command(name='simple', help='Rolls a simple die. ex: !simple greg int charm', aliases=['s'])
     async def roll_simple(self, ctx, *args):
         print('Simple Die Rolled!')
-        roller = Character(self.basePath(ctx))
+        roller = Character(self.nlp,self.basePath(ctx))
         for x in args:
             try:
                 roller = self.loadChar(ctx, x)
@@ -142,7 +144,7 @@ class DiceRolls(commands.Cog):
     @commands.command(name='stress', help='Rolls a stress die. ex: !stress greg int charm', aliases=['st'])
     async def roll_stress(self, ctx, *args):
         result = random.randint(1, 10)
-        roller = Character(self.basePath(ctx))
+        roller = Character(self.nlp,self.basePath(ctx))
         for x in args:
             try:
                 roller = self.loadChar(ctx, x)
@@ -293,7 +295,7 @@ class DiceRolls(commands.Cog):
     @commands.command(name='stressC', help='Rolls a stress die with an expected result')
     @commands.has_role('admin')
     async def roll_stressC(self, ctx, result: int, *args):
-        roller = Character(self.basePath(ctx))
+        roller = Character(self.nlp,self.basePath(ctx))
         for x in set(args):
             try:
                 roller.load(x)

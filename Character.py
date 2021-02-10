@@ -332,7 +332,8 @@ class Ability():
 
 
 class Character():
-    def __init__(self, basePath=(Path.cwd() / 'servers' / 'unClassified'), name='default'):
+    def __init__(self,nlp, basePath=(Path.cwd() / 'servers' / 'unClassified'), name='default'):
+        self.nlp = nlp
         self.name = name
         self.basePath = basePath
         tempGrogs = basePath / 'characters' / 'tempGrogs'
@@ -469,12 +470,11 @@ class Character():
             keyWord += word + ' '
         keyWord = keyWord.strip()
 
-        nlp = spacy.load('en_core_web_lg')
-        keyToken = nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
+        keyToken = self.nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
         charisticList = []
         weight = []
         for x in range(len(charistics)):
-            charToken = nlp(charistics[x][0])
+            charToken = self.nlp(charistics[x][0])
             sim = keyToken.similarity(charToken)
             charisticList.append((sim,charistics[x][1]))
         charisticList.sort()
@@ -505,14 +505,14 @@ class Character():
                 keyWord += word + ' '
             keyWord = keyWord.strip()
 
-            nlp = spacy.load('en_core_web_lg')
-            keyToken = nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
+
+            keyToken = self.nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
             v = Virtue('placeholder')
             virtRefList = list(v.virtuesLib.values())
             virtList = []
             weight = []
             for virtue in virtRefList:
-                virtToken = nlp(virtue['name'])
+                virtToken = self.nlp(virtue['name'])
                 sim = keyToken.similarity(virtToken)
                 weight.append(sim)
                 virtList.append(virtue['name'])
@@ -582,7 +582,7 @@ class Character():
             FlawList = []
             weight = []
             for flaw in FlawRefList:
-                flawToken = nlp(flaw['name'])
+                flawToken = self.nlp(flaw['name'])
                 sim = keyToken.similarity(flawToken)
                 weight.append(sim)
                 FlawList.append(flaw['name'])

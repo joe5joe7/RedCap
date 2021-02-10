@@ -6,11 +6,11 @@ import DiscordStyle
 import Exclamations
 from dotenv import load_dotenv
 import discord
+import spacy
 from pathlib import Path
 
 intents = discord.Intents.default()
 intents.members = True
-
 # 1
 from discord.ext import commands
 

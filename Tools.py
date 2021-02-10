@@ -5,6 +5,7 @@ from pathlib import Path
 import DiscordStyle
 from shutil import copyfile
 import discord
+import spacy
 
 
 
@@ -28,6 +29,7 @@ class Tools(commands.Cog):
                 print('RedCap has connected to ' + server.name + '!')
         except Exception as e:
             print(e)
+        self.nlp = spacy.load('en_core_web_lg')
 
         self.updateMemberList()
 
@@ -132,7 +134,7 @@ class Tools(commands.Cog):
     @commands.command(name='getStats',help='Generate a random block of characteristics')
     async def getStats(self,ctx,*args):
         #await ctx.send(args)
-        temp = Character(self.basePath(ctx),'temp')
+        temp = Character(self.nlp,self.basePath(ctx),'temp')
         #print(args)
         #print(*args)
         temp.genStats(*args)
