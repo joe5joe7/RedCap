@@ -167,7 +167,8 @@ class VirtueFlaw():
 
 
 class Virtue(VirtueFlaw):
-    def __init__(self, name, *args):
+    def __init__(self, name, speciality = 'default'):
+        self.speciality = speciality
         super().__init__()
         self.referenceFile = self.referencePath / 'virtues.txt'
         self.loadReference()
@@ -182,13 +183,18 @@ class Virtue(VirtueFlaw):
         self.description = self.virtuesLib[self.name]['description']
         self.value = self.virtuesLib[self.name]['value']
         self.type = self.virtuesLib[self.name]['type']
+        if self.speciality == 'default' and self.name == 'CUSTOS':
+            self.speciality = random.choice(['(Martial)','(Academic)','(Arcane)'])
+        if self.speciality == 'default' and self.name == 'WISE ONE':
+            self.speciality = random.choice(['(Arcane)','(Academic)'])
 
     def isVirtue(self):
         return True
 
 
 class Flaw(VirtueFlaw):
-    def __init__(self, name, *args):
+    def __init__(self, name, speciality = 'default'):
+        self.speciality = speciality
         super().__init__()
         self.referenceFile = self.referencePath / 'flaws.txt'
         self.loadReference()
@@ -475,9 +481,8 @@ class Character():
         print(charisticList[0][1] + ' ' + charisticList[1][1])
         self.genStats(charisticList[0][1] + ' ' + charisticList[1][1])
 
-
-
-
+    def genStartingAbilities(self,*args):
+        None
 
     def genAbilities(self, xp):
         while xp > 0:
@@ -490,140 +495,142 @@ class Character():
             self.abilities[randAbility['name']].addXp(change)
 
     def genVirtuesFlawsGrog(self, *args):
-        points = 3
-        virtuePoints = 0
-        # generate a list of virtues and flaws based on supplied phrase
-        # parse args into single string
-        keyWord = ''
-        for word in args:
-            keyWord += word + ' '
-        keyWord = keyWord.strip()
+        try:
+            points = 3
+            virtuePoints = 0
+            # generate a list of virtues and flaws based on supplied phrase
+            # parse args into single string
+            keyWord = ''
+            for word in args:
+                keyWord += word + ' '
+            keyWord = keyWord.strip()
 
-        nlp = spacy.load('en_core_web_lg')
-        keyToken = nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
-        v = Virtue('placeholder')
-        virtRefList = list(v.virtuesLib.values())
-        virtList = []
-        weight = []
-        for virtue in virtRefList:
-            virtToken = nlp(virtue['name'])
-            sim = keyToken.similarity(virtToken)
-            weight.append(sim)
-            virtList.append(virtue['name'])
-        c = weight.copy()
-        c2 = c.copy()
-        popped = 0
-        for x in range(len(c)):
-            if c[x] <= 0:
-                c2.pop(x - popped)
-                virtList.pop(x - popped)
-                popped += 1
+            nlp = spacy.load('en_core_web_lg')
+            keyToken = nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
+            v = Virtue('placeholder')
+            virtRefList = list(v.virtuesLib.values())
+            virtList = []
+            weight = []
+            for virtue in virtRefList:
+                virtToken = nlp(virtue['name'])
+                sim = keyToken.similarity(virtToken)
+                weight.append(sim)
+                virtList.append(virtue['name'])
+            c = weight.copy()
+            c2 = c.copy()
+            popped = 0
+            for x in range(len(c)):
+                if c[x] <= 0:
+                    c2.pop(x - popped)
+                    virtList.pop(x - popped)
+                    popped += 1
 
-        c = [x * 100.0 for x in c2]
-        c2 = [pow(x, 10.0) for x in c]
-        total = sum(c2)
-        weight = [x / total for x in c2]
-
-        socialStatus = False
-        while virtuePoints < points:
-            skip = False
-            choice = numpy.random.choice(virtList, p=weight)
-            if Virtue(choice).type != 'Social Status' and socialStatus is False:
-                continue
-            num = virtList.index(choice)
-            virtList.pop(num)
-            weight.pop(num)
-            total = sum(weight)
-            c2 = weight.copy()
+            c = [x * 100.0 for x in c2]
+            c2 = [pow(x, 10.0) for x in c]
+            total = sum(c2)
             weight = [x / total for x in c2]
-            randVirtue = Virtue(choice)
-            print(randVirtue.name + ' ' + randVirtue.type)
-            if randVirtue.type == 'Social Status':
-                for virt in list(self.virtues.keys()):
-                    if self.virtues[virt].type == 'Social Status':
-                        print('Already have a social status, ')
-                        skip = True
+
+            socialStatus = False
+            while virtuePoints < points:
+                skip = False
+                choice = numpy.random.choice(virtList, p=weight)
+                if Virtue(choice).type != 'Social Status' and socialStatus is False:
+                    continue
+                num = virtList.index(choice)
+                virtList.pop(num)
+                weight.pop(num)
+                total = sum(weight)
+                c2 = weight.copy()
+                weight = [x / total for x in c2]
+                randVirtue = Virtue(choice)
+                print(randVirtue.name + ' ' + randVirtue.type)
+                if randVirtue.type == 'Social Status':
+                    for virt in list(self.virtues.keys()):
+                        if self.virtues[virt].type == 'Social Status':
+                            print('Already have a social status, ')
+                            skip = True
+                        else:
+                            print('Social status set to ' + randVirtue.name)
+                            socialStatus = True
+                if skip:
+                    continue
+                if randVirtue.type == 'Social Status':
+                    socialStatus = True
+                if randVirtue.type == 'Hermetic':
+                    continue
+                if randVirtue.name == 'The Gift':
+                    continue
+                else:
+                    None
+                if randVirtue.value == 'Major':
+                    if (virtuePoints + 3) <= points:
+                        virtuePoints += 3
+                        self.virtues[randVirtue.name] = randVirtue
                     else:
-                        print('Social status set to ' + randVirtue.name)
-                        socialStatus = True
-            if skip:
-                continue
-            if randVirtue.type == 'Social Status':
-                socialStatus = True
-            if randVirtue.type == 'Hermetic':
-                continue
-            if randVirtue.name == 'The Gift':
-                continue
-            else:
-                None
-            if randVirtue.value == 'Major':
-                if (virtuePoints + 3) <= points:
-                    virtuePoints += 3
+                        continue
+
+                elif randVirtue.value == 'Minor':
+                    virtuePoints += 1
                     self.virtues[randVirtue.name] = randVirtue
-                else:
-                    continue
+                elif randVirtue.value == 'Free':
+                    self.virtues[randVirtue.name] = randVirtue
+                print('Reached end of loop')
 
-            elif randVirtue.value == 'Minor':
-                virtuePoints += 1
-                self.virtues[randVirtue.name] = randVirtue
-            elif randVirtue.value == 'Free':
-                self.virtues[randVirtue.name] = randVirtue
-            print('Reached end of loop')
+            flawPoints = 0
+            f = Flaw('placeholder')
+            FlawRefList = list(f.virtuesLib.values())
+            FlawList = []
+            weight = []
+            for flaw in FlawRefList:
+                flawToken = nlp(flaw['name'])
+                sim = keyToken.similarity(flawToken)
+                weight.append(sim)
+                FlawList.append(flaw['name'])
+            c = weight.copy()
+            c2 = c.copy()
+            popped = 0
+            for x in range(len(c)):
+                if c[x] <= 0:
+                    c2.pop(x - popped)
+                    FlawList.pop(x - popped)
+                    popped += 1
 
-        flawPoints = 0
-        f = Flaw('placeholder')
-        FlawRefList = list(f.virtuesLib.values())
-        FlawList = []
-        weight = []
-        for flaw in FlawRefList:
-            flawToken = nlp(flaw['name'])
-            sim = keyToken.similarity(flawToken)
-            weight.append(sim)
-            FlawList.append(flaw['name'])
-        c = weight.copy()
-        c2 = c.copy()
-        popped = 0
-        for x in range(len(c)):
-            if c[x] <= 0:
-                c2.pop(x - popped)
-                FlawList.pop(x - popped)
-                popped += 1
-
-        c = [x * 100.0 for x in c2]
-        c2 = [pow(x, 10.0) for x in c]
-        total = sum(c2)
-        weight = [x / total for x in c2]
-
-        while flawPoints < points:
-            choice = numpy.random.choice(FlawList, p=weight)
-            num = FlawList.index(choice)
-            FlawList.pop(num)
-            weight.pop(num)
-            total = sum(weight)
-            c2 = weight.copy()
+            c = [x * 100.0 for x in c2]
+            c2 = [pow(x, 10.0) for x in c]
+            total = sum(c2)
             weight = [x / total for x in c2]
 
-            randFlaw = Flaw(choice)
-            if randFlaw.type == 'Story':
-                continue
-            if randFlaw.type == 'Hermetic':
-                continue
-            if randFlaw.type == 'Personality':
-                for fla in self.flaws:
-                    if self.flaws[fla].type == 'Personality':
-                        continue
-            if randFlaw.value == 'Major':
-                if (flawPoints + 3) <= points:
-                    flawPoints += 3
-                    self.flaws[randFlaw.name] = randFlaw
-                else:
-                    continue
-            elif randFlaw.value == 'Minor':
-                flawPoints += 1
-                self.flaws[randFlaw.name] = randFlaw
-            elif randFlaw.value == 'Free':
-                self.flaws[randFlaw.name] = randFlaw
+            while flawPoints < points:
+                choice = numpy.random.choice(FlawList, p=weight)
+                num = FlawList.index(choice)
+                FlawList.pop(num)
+                weight.pop(num)
+                total = sum(weight)
+                c2 = weight.copy()
+                weight = [x / total for x in c2]
 
+                randFlaw = Flaw(choice)
+                if randFlaw.type == 'Story':
+                    continue
+                if randFlaw.type == 'Hermetic':
+                    continue
+                if randFlaw.type == 'Personality':
+                    for fla in self.flaws:
+                        if self.flaws[fla].type == 'Personality':
+                            continue
+                if randFlaw.value == 'Major':
+                    if (flawPoints + 3) <= points:
+                        flawPoints += 3
+                        self.flaws[randFlaw.name] = randFlaw
+                    else:
+                        continue
+                elif randFlaw.value == 'Minor':
+                    flawPoints += 1
+                    self.flaws[randFlaw.name] = randFlaw
+                elif randFlaw.value == 'Free':
+                    self.flaws[randFlaw.name] = randFlaw
+        except Exception as e:
+            print(e)
     def printVirtuesFlaws(self):
         print('Virtues: \n')
         for x in self.virtues.values():
@@ -656,6 +663,53 @@ class Character():
             None
         self.abilities[tempAbi.name] = tempAbi
         return (tempAbi.name)
+
+    def addAbilityCheck(self,name, speciality='default'):
+        tempAbi = Ability(name)
+        #('(General)', '(Academic)', '(Arcane)', '(Martial)', '(Supernatural)')
+        try:
+            self.abilities[tempAbi.name]
+            return False
+        except:
+            None
+        if tempAbi.type == '(General)':
+            self.abilities[tempAbi.name] = tempAbi
+            return(tempAbi.name)
+
+        elif tempAbi.type == '(Academic)':
+            if self.hasVirtue('REDCAP') or self.hasVirtue('PRIEST') or self.hasVirtue('MENDICANT FRIAR') or self.hasVirtue('MAGISTER IN ARTIBUS') or self.hasVirtue('FAILED APPRENTICE') or self.hasVirtue('EDUCATED') or self.hasVirtue('CLERK'):
+                self.abilities[tempAbi.name] = tempAbi
+                return(tempAbi.name)
+            elif self.hasVirtue('CUSTOS'):
+                if self.virtues['CUSTOS'].speciality == '(Academic)':
+                    self.abilities[tempAbi.name] = tempAbi
+                    return(tempAbi.name)
+                else:
+                    return False
+            elif self.hasVirtue('WISE ONE'):
+                if self.virtues['WISE ONE'].speciality == '(Academic)':
+                    self.abilities[tempAbi.name] = tempAbi
+                    return(tempAbi.name)
+                else:
+                    return False
+
+        elif tempAbi.type == '(Arcane)':
+            if self.hasVirtue('ARCANE LORE',''):
+                self.abilities[tempAbi.name] = tempAbi
+                return(tempAbi.name)
+            elif self.hasVirtue('WISE ONE'):
+                if self.virtues['WISE ONE'].speciality == '(Arcane)':
+                    self.abilities[tempAbi.name] = tempAbi
+                    return(tempAbi.name)
+                else:
+                    return False
+
+
+    def hasVirtue(self,virtueName):
+        if virtueName in list(self.virtues.keys()):
+            return True
+        else:
+            return False
 
     def save(self, type='g'):
         # type is the type of character which determines the save folder
