@@ -54,15 +54,21 @@ class DiceRolls(commands.Cog):
                 None
         return roller
 
+    async def checkExist(self,ctx,name):
+        tempChar = Character(self.nlp,await self.basePath(ctx),'temp')
+        try:
+            tempChar.load(name)
+            return True
+        except:
+            return False
+
     @commands.command(name='associate', help='Associates you with a character, dice rolls will assume that char')
     async def associate(self, ctx, charName):
-        cs = CharacterSheet(self.bot)
-        if await cs.checkExist(ctx, charName):
+        if await self.checkExist(ctx, charName):
             self.associations[ctx.message.author.id] = charName
             await ctx.send('Successfully associated ' + ctx.message.author.name + ' with ' + charName.capitalize())
         else:
             await ctx.send('Chosen character does not exist :(')
-        del cs
 
     @commands.command(name='simple', help='Rolls a simple die. ex: !simple greg int charm', aliases=['s'])
     async def roll_simple(self, ctx, *args):
