@@ -1,14 +1,12 @@
-import random
 from pathlib import Path
 import pickle
-from glob import glob
 import random
 import math
 import Levenshtein
 import shutil
-import spacy
 import re
 import numpy
+import os
 
 
 # Todo
@@ -356,7 +354,6 @@ class Character():
         for key in self.filepaths:
             try:
                 self.filepaths[key].mkdir(parents=True)
-                print(str(self.filepaths[key]) + 'created')
             except:
                 pass
         self.characteristics = {
@@ -465,7 +462,6 @@ class Character():
         points = 7
         charistics = [('Intelligence','int'),('Perception','per'),('Strength','str'),('Stamina','sta'),('Presence','pre'),('Communication','com'),('Dexterity','dex'),('Quickness','qik')]
         keyWord = ''
-        print(args)
         for word in args:
             keyWord += word + ' '
         keyWord = keyWord.strip()
@@ -478,7 +474,6 @@ class Character():
             sim = keyToken.similarity(charToken)
             charisticList.append((sim,charistics[x][1]))
         charisticList.sort()
-        print(charisticList[0][1] + ' ' + charisticList[1][1])
         self.genStats(charisticList[0][1] + ' ' + charisticList[1][1])
 
     def genStartingAbilities(self,*args):
@@ -543,14 +538,11 @@ class Character():
                 c2 = weight.copy()
                 weight = [x / total for x in c2]
                 randVirtue = Virtue(choice)
-                print(randVirtue.name + ' ' + randVirtue.type)
                 if randVirtue.type == 'Social Status':
                     for virt in list(self.virtues.keys()):
                         if self.virtues[virt].type == 'Social Status':
-                            print('Already have a social status, ')
                             skip = True
                         else:
-                            print('Social status set to ' + randVirtue.name)
                             socialStatus = True
                 if skip:
                     continue
@@ -574,7 +566,6 @@ class Character():
                     self.virtues[randVirtue.name] = randVirtue
                 elif randVirtue.value == 'Free':
                     self.virtues[randVirtue.name] = randVirtue
-                print('Reached end of loop')
 
             flawPoints = 0
             f = Flaw('placeholder')
@@ -725,11 +716,9 @@ class Character():
                 # Checks the identifier to see if we are saving an upadated version of the existing character.
                 if savedChar.identifier != self.identifier:
                     # Returns without saving if we aren't
-                    print('identifier mismatch')
                     return ('A different character with this name already exists')
                 else:
                     # updates type to whatever type existing character is
-                    print('c1')
                     type = list(self.filepaths.keys())[list(self.filepaths.values()).index(existingPath.parents[0])]
                     pass
 
@@ -765,12 +754,11 @@ class Character():
             except:
                 print('Character not saved, likely invalid type')
                 return ('Character not saved, likely invalid type')
-            print('c2')
             pickle.dump(self, saveFile)
             saveFile.close()
-            print('c3')
             try:
                 shutil.rmtree(self.filepaths[type] / ('info.' + self.name))
+                os.mkdir(self.filepaths[type]/('info.' + self.name))
             except:
                 None
             for x in self.abilities:
@@ -808,7 +796,6 @@ class Character():
                 pickle.dump(self.flaws[x], saveFile)
         except Exception as e:
             print(e)
-        print('Character saved')
         return ('Character saved')
 
     # print(self.characteristics)

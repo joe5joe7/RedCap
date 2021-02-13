@@ -58,13 +58,9 @@ class CharacterSheet(commands.Cog):
         #first step is to generate a name
         print('genning grog')
         try:
-            print('c-1')
             name = names.get_first_name()
-            print('c0')
             grog=Character(self.nlp,await self.basePath(ctx),name)
-            print('c1')
             grog.genVirtuesFlawsGrog(*args)
-            print('c2')
             grog.genSimStats()
             grog.genAbilities(200)
         except Exception as e:
@@ -124,7 +120,6 @@ class CharacterSheet(commands.Cog):
         await member.send(char)
         msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
         msg = msg.content
-        print(msg)
         charList=[]
         for x in msg.split(' '):
             try:
@@ -141,16 +136,13 @@ class CharacterSheet(commands.Cog):
         await member.send('Now we just need to add abilities. Send me a message containing the name of the ability, and when I have confirmed it send me how much xp in the ability your character has.')
         msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
         msg = msg.content
-        print(msg)
         try:
             abi = customCharacter.addAbility(msg)
-            print(abi)
         except Exception as e:
             print(e)
         await member.send('You want to add xp to ' + abi + '. Please send only a number with the amount of xp')
         msg = await self.bot.wait_for('message',check=lambda message: message.author == ctx.author)
         msg = msg.content
-        print(str(int(msg)))
         customCharacter.abilities[abi].addXp(int(msg))
         await member.send(str(msg) + ' xp added to ' + abi +'. Your score is now ' + str(customCharacter.abilities[abi].score))
         c = True
@@ -171,7 +163,6 @@ class CharacterSheet(commands.Cog):
             msg = msg.content
             try:
                 abi = customCharacter.addAbility(msg)
-                print(abi)
             except Exception as e:
                 print(e)
             await member.send('You want to add xp to ' + abi + '. Please send a number for the amount of xp')
@@ -229,13 +220,9 @@ class CharacterSheet(commands.Cog):
                         contents = []
                     elif msg.content.lower() =='y' or msg.content.lower() == 'yes':
                         waiting = False
-                        print('check .5')
                         await member.send('Updating...')
-                        print('check 0')
                         oldChar = Character(self.nlp,await self.basePath(ctx),'old')
-                        print('check 1')
                         oldChar.load(contents[0])
-                        print('check 2')
 
                     elif msg.content.lower() =='c' or msg.content.lower() == 'check':
                         tempChar = Character(self.nlp,await self.basePath(ctx),contents[0])
@@ -245,7 +232,6 @@ class CharacterSheet(commands.Cog):
                     else:
                         await member.send('Please enter yes, no, or check')
 
-            print('check 0.5')
             newChar = Character(self.nlp,await self.basePath(ctx),contents[0])
             try:
                 newChar.identifier = oldChar.identifier
@@ -255,8 +241,6 @@ class CharacterSheet(commands.Cog):
                 title = line.split(':')[0]
                 title = title.strip()
                 content = line.replace(title + ':', '')
-                print(title)
-                print(content)
                 if title == 'Covenant':
                     newChar.covenant = content
                 elif title ==  'Characteristics':
@@ -265,7 +249,6 @@ class CharacterSheet(commands.Cog):
                     charOrder=[0,1,4,5,2,3,6,7]
                     it = 0
                     for x in content:
-                        print(x)
                         try:
                             int(x)
                             newChar.characteristics[newChar.charList[charOrder[it]]] = int(x)
