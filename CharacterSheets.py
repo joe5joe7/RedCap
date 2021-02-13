@@ -31,8 +31,8 @@ class CharacterSheet(commands.Cog):
         self.priest={'priest','monk','chaplain'}
         self.style='blue'
         self.associations = {}
-        #self.nlp = spacy.load('en_core_web_lg')
-        self.nlp = 'dummyNLP'
+        self.nlp = spacy.load('en_core_web_lg')
+        #self.nlp = 'dummyNLP'
 
     
     async def basePath(self,ctx,msg = False):
