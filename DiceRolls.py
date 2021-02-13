@@ -22,7 +22,7 @@ class DiceRolls(commands.Cog):
         self.bot = bot
         self.__last_member = None
         self.associations = {}
-        self.nlp = spacy.load('en_core_web_lg')
+        self.nlp = 'dummyNLP'
 
     def basePath(self, ctx):
         if ctx.guild != None:
