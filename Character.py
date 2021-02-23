@@ -810,7 +810,9 @@ class Character():
         # print((list(self.basePath.glob('**/' + name))[0]))
         try:
             infile = open(list(self.basePath.glob('**/' + name))[0], 'rb')
+            print('TS:          first pickle load started: ' + str(datetime.utcnow()))
             char = pickle.load(infile)
+            print('TS:          first pickle load finished: ' + str(datetime.utcnow()))
             infoF = Path(list(self.basePath.glob('**/' + name))[0]).parent / ('info.' + char.name)
             infile.close()
             #	print('successfully unpickled')
@@ -837,7 +839,9 @@ class Character():
                 try:
                     file = open(x, 'rb')
                     try:
+                        print('TS:          Second pickle load started: ' + str(datetime.utcnow()))
                         infoTemp = pickle.load(file)
+                        print('TS:          Second pickle load finished: ' + str(datetime.utcnow()))
                     except Exception as e:
                         print(e)
 
