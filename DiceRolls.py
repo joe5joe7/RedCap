@@ -44,7 +44,7 @@ class DiceRolls(commands.Cog):
             return(Path.cwd()/'servers'/'unClassified')
 
     async def loadChar(self, ctx, *args):
-        print('TS:      Attempting to load character: ' + str(datetime.utcnow()))
+        print('TS: Attempting to load character: ' + str(datetime.utcnow()))
         roller = Character(self.nlp,await self.basePath(ctx))
         #   print(args)
         for x in (args):
