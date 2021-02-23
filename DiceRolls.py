@@ -11,6 +11,7 @@ import Character
 from Character import Character
 import Levenshtein
 import spacy
+from datetime import datetime
 
 style = 'blue'
 from Tools import Tools
@@ -22,28 +23,28 @@ class DiceRolls(commands.Cog):
         self.bot = bot
         self.__last_member = None
         self.associations = {}
-        self.nlp = 'dummyNLP'
+        self.nlp = spacy.load('en_core_web_lg')
 
-    def basePath(self, ctx):
+    async def basePath(self,ctx,msg = False):
         if ctx.guild != None:
-            return (Path.cwd() / 'servers' / str(ctx.guild.id))
+            return(Path.cwd()/'servers'/str(ctx.guild.id))
         if ctx.guild == None:
             member = ctx.message.author
             t = Tools(self.bot)
             if str(member.id) in t.memberList:
                 try:
-                    member.send('Currently associated with the guild ' + t.memberList[str(member.id)][
-                        2] + ', if you would like to upload to a different server use the !register command there.')
+                    if msg:
+                        await member.send('Currently associated with the guild ' + t.memberList[str(member.id)][2] + ', if you would like to upload to a different server use the !register command there.')
                 except:
-                    member.send(
-                        'Server regristration has been updated since last use, please use !register in your server of choice to use dms with RedCap. Thank you!')
-                return (Path.cwd() / 'servers' / str(t.memberList[str(member.id)][1]))
-            member.send(
-                'You are currently not registered to a server. Please use the !register command in your server of choice before using dms with RedCap. Thank you!')
-            return (Path.cwd() / 'servers' / 'unClassified')
+                        await member.send('Server regristration has been updated since last use, please use !register in your server of choice to use dms with RedCap. Thank you!')
+                        raise Exception
+                return (Path.cwd()/'servers'/str(t.memberList[str(member.id)][1]))
+            await member.send('You are currently not registered to a server. Please use the !register command in your server of choice before using dms with RedCap. Thank you!')
+            raise Exception
+            return(Path.cwd()/'servers'/'unClassified')
 
-    def loadChar(self, ctx, *args):
-        roller = Character(self.nlp,self.basePath(ctx))
+    async def loadChar(self, ctx, *args):
+        roller = Character(self.nlp,await self.basePath(ctx))
         #   print(args)
         for x in (args):
             try:
@@ -73,10 +74,10 @@ class DiceRolls(commands.Cog):
     @commands.command(name='simple', help='Rolls a simple die. ex: !simple greg int charm', aliases=['s'])
     async def roll_simple(self, ctx, *args):
         print('Simple Die Rolled!')
-        roller = Character(self.nlp,self.basePath(ctx))
+        roller = Character(self.nlp,await self.basePath(ctx))
         for x in args:
             try:
-                roller = self.loadChar(ctx, x)
+                roller = (await self.loadChar(ctx, x))
                 if roller.name != 'default':
                     break
             except Exception as e:
@@ -85,7 +86,7 @@ class DiceRolls(commands.Cog):
         try:
             if ctx.message.author.id in self.associations.keys() and roller.name == 'default':
                 print('loading ' + self.associations[ctx.message.author.id])
-                roller = self.loadChar(ctx,self.associations[ctx.message.author.id])
+                roller = (await self.loadChar(ctx,self.associations[ctx.message.author.id]))
         except Exception as e:
             print('Exception loading associated char')
             print(e)
@@ -149,20 +150,23 @@ class DiceRolls(commands.Cog):
 
     @commands.command(name='stress', help='Rolls a stress die. ex: !stress greg int charm', aliases=['st'])
     async def roll_stress(self, ctx, *args):
+        print('TS: Stress roll initiated: ' + str(datetime.utcnow()))
+        print('TS: Time for DateTime: ' + str(datetime.utcnow()))
         result = random.randint(1, 10)
-        roller = Character(self.nlp,self.basePath(ctx))
+        roller = Character(self.nlp,await self.basePath(ctx))
+        print('TS: Character template initiated: ' + str(datetime.utcnow()))
         for x in args:
             try:
-                roller = self.loadChar(ctx, x)
+                roller = (await self.loadChar(ctx, x))
                 if roller.name != 'default':
                     break
             except Exception as e:
-                print('Exception loading character simple die')
+                print('Exception loading character stress die')
                 print(e)
         try:
             if ctx.message.author.id in self.associations.keys() and roller.name == 'default':
                 print('loading ' + self.associations[ctx.message.author.id])
-                roller = self.loadChar(ctx,self.associations[ctx.message.author.id])
+                roller = (await self.loadChar(ctx,self.associations[ctx.message.author.id]))
         except Exception as e:
             print('Exception loading associated char')
             print(e)
@@ -175,10 +179,11 @@ class DiceRolls(commands.Cog):
                     args.remove(roller.name.lower())
                 except:
                     None
-            print(args)
+            #print(args)
         except:
             None
-        print(roller.name)
+        #print(roller.name)
+        print('TS: Character initiated: ' + str(datetime.utcnow()))
         rando = random.randint(1, 10)
         #   print('random number generated, ' + str(rando))
         if roller.name != 'default':
@@ -211,9 +216,10 @@ class DiceRolls(commands.Cog):
                 addition += int(abiadd)
             except Exception as e:
                 print(e)
-                print('no ability entered')
+                #print('no ability entered')
                 ability = '*no ability entered*'
                 abiadd = 0
+        print('TS: Characteristic/Ability initiated: ' + str(datetime.utcnow()))
 
         if (result != 0 and result != 1):
             if roller.name != 'default':
@@ -270,6 +276,7 @@ class DiceRolls(commands.Cog):
             else:
                 await ctx.send(
                     DiscordStyle.style(('You rolled a {0}, you might botch! Use the !botch command to check!'), 'red'))
+        print('TS: Stress die completed: ' + str(datetime.utcnow()))
 
     @commands.command(name='botch', help='Rolls your botch dice. Use the format !botch [number]', aliases=['b'])
     async def botch(self, ctx, num: int = 1):
@@ -301,7 +308,7 @@ class DiceRolls(commands.Cog):
     @commands.command(name='stressC', help='Rolls a stress die with an expected result')
     @commands.has_role('admin')
     async def roll_stressC(self, ctx, result: int, *args):
-        roller = Character(self.nlp,self.basePath(ctx))
+        roller = Character(self.nlp,await self.basePath(ctx))
         for x in set(args):
             try:
                 roller.load(x)

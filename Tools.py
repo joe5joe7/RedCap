@@ -29,7 +29,7 @@ class Tools(commands.Cog):
                 print('RedCap has connected to ' + server.name + '!')
         except Exception as e:
             print(e)
-        self.nlp = 'dummyNLP'
+        self.nlp = spacy.load('en_core_web_lg')
 
         self.updateMemberList()
 
