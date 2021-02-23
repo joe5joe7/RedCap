@@ -7,6 +7,7 @@ import shutil
 import re
 import numpy
 import os
+from datetime import datetime
 
 
 # Todo
@@ -800,6 +801,7 @@ class Character():
 
     # print(self.characteristics)
     def load(self, name):
+        print('TS:          load subroutine initialized: ' + str(datetime.utcnow()))
         #	print('attempting to load ' + name)
         #	print('using path ' + str(Path.cwd() / 'characters' / '**' / name))
         # p = list(Path.cwd().glob('**/'+name))[0]
@@ -860,7 +862,7 @@ class Character():
                     None
         except Exception as e:
             print(e)
-
+        print('TS:          load subroutine finished: ' + str(datetime.utcnow()))
         return (self.name + ' successfully loaded')
 
     def isCharacter(self):
