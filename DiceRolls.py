@@ -44,6 +44,7 @@ class DiceRolls(commands.Cog):
             return(Path.cwd()/'servers'/'unClassified')
 
     async def loadChar(self, ctx, *args):
+        print('TS: Attempting to load character: ' + str(datetime.utcnow()))
         roller = Character(self.nlp,await self.basePath(ctx))
         #   print(args)
         for x in (args):
@@ -163,6 +164,7 @@ class DiceRolls(commands.Cog):
             except Exception as e:
                 print('Exception loading character stress die')
                 print(e)
+        print('TS: Character initiated: ' + str(datetime.utcnow()))
         try:
             if ctx.message.author.id in self.associations.keys() and roller.name == 'default':
                 print('loading ' + self.associations[ctx.message.author.id])
@@ -183,7 +185,7 @@ class DiceRolls(commands.Cog):
         except:
             None
         #print(roller.name)
-        print('TS: Character initiated: ' + str(datetime.utcnow()))
+        print('TS: Checked association and removed name from args: ' + str(datetime.utcnow()))
         rando = random.randint(1, 10)
         #   print('random number generated, ' + str(rando))
         if roller.name != 'default':
