@@ -755,7 +755,7 @@ class Character():
             except:
                 print('Character not saved, likely invalid type')
                 return ('Character not saved, likely invalid type')
-            pickle.dump(self, saveFile)
+            pickle.dump(self, saveFile, protocol=-1)
             saveFile.close()
             try:
                 shutil.rmtree(self.filepaths[type] / ('info.' + self.name))
@@ -774,7 +774,7 @@ class Character():
                     saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('ability.' + x), 'wb')
                 except Exception as e:
                     print(e)
-                pickle.dump(self.abilities[x], saveFile)
+                pickle.dump(self.abilities[x], saveFile,protocol=-1)
             for x in self.virtues:
                 p = self.filepaths[type] / ('info.' + self.name)
                 try:
@@ -784,7 +784,7 @@ class Character():
                 except:
                     None
                 saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('virute.' + x), 'wb')
-                pickle.dump(self.virtues[x], saveFile)
+                pickle.dump(self.virtues[x], saveFile,protocol=-1)
             for x in self.flaws:
                 p = self.filepaths[type] / ('info.' + self.name)
                 try:
@@ -794,7 +794,7 @@ class Character():
                 except:
                     None
                 saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('flaw.' + x), 'wb')
-                pickle.dump(self.flaws[x], saveFile)
+                pickle.dump(self.flaws[x], saveFile,protocol=-1)
         except Exception as e:
             print(e)
         return ('Character saved')
