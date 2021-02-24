@@ -422,7 +422,7 @@ trying to spot the character using Legerdemain
 receives a +3 bonus. Specialties: filching, picking
 pockets, “magic” tricks. (General)
 
-(LIVING LANGUAGE)*
+LIVING LANGUAGE*
 Fluency in a particular living language.
 Rather than a die roll modifier, your score in
 this Knowledge measures your ability to
