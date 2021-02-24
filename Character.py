@@ -39,6 +39,9 @@ import json
 # Within character gen, there appears to be a limited number of things virtues do. Give permission to get certain skills, give xp points limited to certain skills, or modify xp spent on certain skills.
 # maybe .addXPcharGen which checks for limitations like not having requisit virtues?
 
+class alreadyExist(Exception):
+    pass
+
 class VirtueFlaw():
     def __init__(self, speciality=''):
         self.name = ''
@@ -252,7 +255,7 @@ class Ability():
 
     def addXp(self, xp):
         self.xp += xp
-        self.score = int((-5 + math.sqrt(25 + 40 * xp)) / 10)
+        self.score = int((-5 + math.sqrt(25 + 40 * self.xp)) / 10)
 
     def setScore(self, score):
         self.score = score
@@ -268,7 +271,6 @@ class Ability():
         searchingFor = 'name'
         newAbility = self.abilitiesRef.copy()
         for line in refsheet:
-
             if searchingFor == 'name':
                 if len(line) < 2:
                     continue
@@ -479,8 +481,107 @@ class Character():
         charisticList.sort()
         self.genStats(charisticList[0][1] + ' ' + charisticList[1][1])
 
+    def genGrogAbilities(self,age,*args):
+        print('TS: gen Grog starting abilities started: ' + str(datetime.utcnow()))
+        keyWord = ''
+        for word in args:
+            keyWord += word + ' '
+        keyWord = keyWord.strip()
+
+
+        keyToken = self.nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
+        a = Ability('placeholder')
+        abiRefList = list(a.abilitiesLib.values())
+        abiList = []
+        weight = []
+        for abi in abiRefList:
+            # Generate check the similarity of each abilities to the keyword given, and create a list of virtues and their similarity
+            abiToken = self.nlp(abi['name'])
+            sim = keyToken.similarity(abiToken)
+            weight.append(sim)
+            abiList.append(abi['name'])
+
+        # Turn weight into a weighted probability list with each weight corresponding to its ability, and remove any values under 0
+        c = weight.copy()
+        c2 = c.copy()
+        popped = 0
+        for x in range(len(c)):
+            if c[x] <= 0:
+                c2.pop(x - popped)
+                abiList.pop(x - popped)
+                popped += 1
+        c = [x * 100.0 for x in c2]
+        c2 = [pow(x, 10.0) for x in c]
+        total = sum(c2)
+        weight = [x / total for x in c2]
+
+        xp = age*15
+        while xp > 0:
+            cAbi = numpy.random.choice(abiList, p=weight)
+            try:
+                cAbi = self.addAbility(cAbi)
+            except alreadyExist:
+                cAbi = self.closestAbi(cAbi)
+            self.abilities[cAbi].addXp(5)
+            xp -= 5
+
+
+        print('TS: gen Grog starting abilities completed: ' + str(datetime.utcnow()))
+
     def genStartingAbilities(self,*args):
-        None
+        print('TS: gen Grog starting abilities started: ' + str(datetime.utcnow()))
+        self.addAbility('living language')
+        self.abilities['LIVING LANGUAGE'].setScore(5)
+        if (Path.cwd()/'referenceFiles'/'languages').exists():
+            with open(Path.cwd()/'referenceFiles'/'languages','r') as langFile:
+                lang = json.load(langFile)
+                self.abilities[random.choice(lang)[1]] = self.abilities['LIVING LANGUAGE']
+                del self.abilities['LIVING LANGUAGE']
+
+        keyWord = ''
+        for word in args:
+            keyWord += word + ' '
+        keyWord = keyWord.strip()
+
+
+        keyToken = self.nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
+        a = Ability('placeholder')
+        #abiRefList = list(a.abilitiesLib.values())
+        abiRefList = ['(Area) Lore','Athletics','Awareness','Brawl','Charm','Folk Ken','Guile','Living Language','Stealth','Survival','Swim']
+        abiList = []
+        weight = []
+        for abi in abiRefList:
+            # Generate check the similarity of each abilities to the keyword given, and create a list of virtues and their similarity
+            abiToken = self.nlp(abi)
+            sim = keyToken.similarity(abiToken)
+            weight.append(sim)
+            abiList.append(abi)
+
+        # Turn weight into a weighted probability list with each weight corresponding to its ability, and remove any values under 0
+        c = weight.copy()
+        c2 = c.copy()
+        popped = 0
+        for x in range(len(c)):
+            if c[x] <= 0:
+                c2.pop(x - popped)
+                abiList.pop(x - popped)
+                popped += 1
+        c = [x * 100.0 for x in c2]
+        c2 = [pow(x, 5.0) for x in c]
+        total = sum(c2)
+        weight = [x / total for x in c2]
+
+        xp = 45
+        while xp > 0:
+            cAbi = numpy.random.choice(abiList, p=weight)
+            try:
+                cAbi = self.addAbility(cAbi)
+            except alreadyExist:
+                cAbi = self.closestAbi(cAbi)
+            self.abilities[cAbi].addXp(5)
+            xp -= 5
+        print('TS: gen Grog starting abilities completed: ' + str(datetime.utcnow()))
+
 
     def genAbilities(self, xp):
         while xp > 0:
@@ -493,6 +594,7 @@ class Character():
             self.abilities[randAbility['name']].addXp(change)
 
     def genVirtuesFlawsGrog(self, *args):
+        print('TS: gen Grog V/F started: ' + str(datetime.utcnow()))
         try:
             points = 3
             virtuePoints = 0
@@ -510,10 +612,13 @@ class Character():
             virtList = []
             weight = []
             for virtue in virtRefList:
+                # Generate check the similarity of each virtue to the keyword given, and create a list of virtues and their similarity
                 virtToken = self.nlp(virtue['name'])
                 sim = keyToken.similarity(virtToken)
                 weight.append(sim)
                 virtList.append(virtue['name'])
+
+            # Turn weight into a weighted probability list with each weight corresponding to its virtue, and remove any values under 0
             c = weight.copy()
             c2 = c.copy()
             popped = 0
@@ -522,7 +627,6 @@ class Character():
                     c2.pop(x - popped)
                     virtList.pop(x - popped)
                     popped += 1
-
             c = [x * 100.0 for x in c2]
             c2 = [pow(x, 10.0) for x in c]
             total = sum(c2)
@@ -535,11 +639,13 @@ class Character():
                 if Virtue(choice).type != 'Social Status' and socialStatus is False:
                     continue
                 num = virtList.index(choice)
+
                 virtList.pop(num)
                 weight.pop(num)
                 total = sum(weight)
                 c2 = weight.copy()
                 weight = [x / total for x in c2]
+
                 randVirtue = Virtue(choice)
                 if randVirtue.type == 'Social Status':
                     for virt in list(self.virtues.keys()):
@@ -625,6 +731,8 @@ class Character():
                     self.flaws[randFlaw.name] = randFlaw
         except Exception as e:
             print(e)
+        print('TS: gen Grog V/F finished: ' + str(datetime.utcnow()))
+
     def printVirtuesFlaws(self):
         print('Virtues: \n')
         for x in self.virtues.values():
@@ -648,11 +756,17 @@ class Character():
         self.flaws[tempFlaw.name] = tempFlaw
         return tempFlaw.name
 
+    def closestAbi(self,name):
+        tempAbi = Ability(name)
+        return tempAbi.name
+
     def addAbility(self, name, speciality='default'):
         tempAbi = Ability(name, speciality)
         try:
             self.abilities[tempAbi.name]
-            raise Exception('ability already exists')
+            raise alreadyExist('ability already exists')
+        except alreadyExist:
+            raise alreadyExist('ability already exists')
         except:
             None
         self.abilities[tempAbi.name] = tempAbi
@@ -688,7 +802,7 @@ class Character():
                     return False
 
         elif tempAbi.type == '(Arcane)':
-            if self.hasVirtue('ARCANE LORE',''):
+            if self.hasVirtue('ARCANE LORE'):
                 self.abilities[tempAbi.name] = tempAbi
                 return(tempAbi.name)
             elif self.hasVirtue('WISE ONE'):
@@ -811,7 +925,7 @@ class Character():
 
     # print(self.characteristics)
     def load(self, name):
-        print('TS:          load subroutine initialized: ' + str(datetime.utcnow()))
+        #print('TS:          load subroutine initialized: ' + str(datetime.utcnow()))
         #	print('attempting to load ' + name)
         #	print('using path ' + str(Path.cwd() / 'characters' / '**' / name))
         # p = list(Path.cwd().glob('**/'+name))[0]
@@ -820,9 +934,9 @@ class Character():
         # print((list(self.basePath.glob('**/' + name))[0]))
         try:
             infile = open(list(self.basePath.glob('**/' + name))[0], 'rb')
-            print('TS:          first JSON load started: ' + str(datetime.utcnow()))
+            #print('TS:          first JSON load started: ' + str(datetime.utcnow()))
             data = json.load(infile)
-            print('TS:          first JSON load finished: ' + str(datetime.utcnow()))
+            #print('TS:          first JSON load finished: ' + str(datetime.utcnow()))
             infoF = Path(list(self.basePath.glob('**/' + name))[0]).parent / ('info.' + data['name'])
             infile.close()
             #	print('successfully unpickled')
@@ -844,9 +958,9 @@ class Character():
                 try:
                     file = open(x, 'rb')
                     try:
-                        print('TS:          Second pickle load started: ' + str(datetime.utcnow()))
+                        #print('TS:          Second pickle load started: ' + str(datetime.utcnow()))
                         infoTemp = pickle.load(file)
-                        print('TS:          Second pickle load finished: ' + str(datetime.utcnow()))
+                        #print('TS:          Second pickle load finished: ' + str(datetime.utcnow()))
                     except Exception as e:
                         print(e)
 
@@ -871,7 +985,7 @@ class Character():
                     None
         except Exception as e:
             print(e)
-        print('TS:          load subroutine finished: ' + str(datetime.utcnow()))
+        #print('TS:          load subroutine finished: ' + str(datetime.utcnow()))
         return (self.name + ' successfully loaded')
 
     def isCharacter(self):
@@ -879,6 +993,7 @@ class Character():
 
     def display(self):
         output = 'Character name: ' + str(self.name) + '\n'
+        output += 'Age: ' + str(self.age) + '\n'
         for char in self.characteristics:
             output += char.capitalize() + ': ' + str(self.characteristics[char]) + ' '
         output += '\n \n*Abilities:* '

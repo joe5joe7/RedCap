@@ -44,7 +44,7 @@ class DiceRolls(commands.Cog):
             return(Path.cwd()/'servers'/'unClassified')
 
     async def loadChar(self, ctx, *args):
-        print('TS:      Attempting to load character: ' + str(datetime.utcnow()))
+        #print('TS:      Attempting to load character: ' + str(datetime.utcnow()))
         roller = Character(self.nlp,await self.basePath(ctx))
         #   print(args)
         for x in (args):
@@ -151,11 +151,11 @@ class DiceRolls(commands.Cog):
 
     @commands.command(name='stress', help='Rolls a stress die. ex: !stress greg int charm', aliases=['st'])
     async def roll_stress(self, ctx, *args):
-        print('TS: Stress roll initiated: ' + str(datetime.utcnow()))
-        print('TS: Time for DateTime: ' + str(datetime.utcnow()))
+        #print('TS: Stress roll initiated: ' + str(datetime.utcnow()))
+        #print('TS: Time for DateTime: ' + str(datetime.utcnow()))
         result = random.randint(1, 10)
         roller = Character(self.nlp,await self.basePath(ctx))
-        print('TS: Character template initiated: ' + str(datetime.utcnow()))
+        #print('TS: Character template initiated: ' + str(datetime.utcnow()))
         for x in args:
             try:
                 roller = (await self.loadChar(ctx, x))
@@ -164,7 +164,7 @@ class DiceRolls(commands.Cog):
             except Exception as e:
                 print('Exception loading character stress die')
                 print(e)
-        print('TS: Character initiated: ' + str(datetime.utcnow()))
+        #print('TS: Character initiated: ' + str(datetime.utcnow()))
         try:
             if ctx.message.author.id in self.associations.keys() and roller.name == 'default':
                 print('loading ' + self.associations[ctx.message.author.id])
@@ -185,7 +185,7 @@ class DiceRolls(commands.Cog):
         except:
             None
         #print(roller.name)
-        print('TS: Checked association and removed name from args: ' + str(datetime.utcnow()))
+        #print('TS: Checked association and removed name from args: ' + str(datetime.utcnow()))
         rando = random.randint(1, 10)
         #   print('random number generated, ' + str(rando))
         if roller.name != 'default':
@@ -221,7 +221,7 @@ class DiceRolls(commands.Cog):
                 #print('no ability entered')
                 ability = '*no ability entered*'
                 abiadd = 0
-        print('TS: Characteristic/Ability initiated: ' + str(datetime.utcnow()))
+        #print('TS: Characteristic/Ability initiated: ' + str(datetime.utcnow()))
 
         if (result != 0 and result != 1):
             if roller.name != 'default':
@@ -278,7 +278,7 @@ class DiceRolls(commands.Cog):
             else:
                 await ctx.send(
                     DiscordStyle.style(('You rolled a {0}, you might botch! Use the !botch command to check!'), 'red'))
-        print('TS: Stress die completed: ' + str(datetime.utcnow()))
+        #print('TS: Stress die completed: ' + str(datetime.utcnow()))
 
     @commands.command(name='botch', help='Rolls your botch dice. Use the format !botch [number]', aliases=['b'])
     async def botch(self, ctx, num: int = 1):

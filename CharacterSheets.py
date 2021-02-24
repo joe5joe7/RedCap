@@ -55,7 +55,7 @@ class CharacterSheet(commands.Cog):
 
     @commands.command(name='genGrog',help='Generates a random grog.')
     async def genGrog(self,ctx,*args):
-        None
+
         #first step is to generate a name
         print('genning grog')
         try:
@@ -63,7 +63,9 @@ class CharacterSheet(commands.Cog):
             grog=Character(self.nlp,await self.basePath(ctx),name)
             grog.genVirtuesFlawsGrog(*args)
             grog.genSimStats()
-            grog.genAbilities(200)
+            grog.genStartingAbilities(*args)
+            grog.age = random.randint(18,60)
+            grog.genGrogAbilities(grog.age,*args)
         except Exception as e:
             print(e)
         # focus = []
