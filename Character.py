@@ -711,13 +711,13 @@ class Character():
         try:
             # Tries to access a saved character with the same name
             existingPath = list(self.basePath.glob('**/' + self.name))[0]
-            infile = open(existingPath, 'rb')
-            savedChar = pickle.load(infile)
-            infile.close()
+            tempChar = Character(self.nlp)
+            tempChar.load(self.name)
 
             # Checks the identifier to see if we are saving an upadated version of the existing character.
-            if savedChar.identifier != self.identifier:
+            if tempChar.identifier != self.identifier:
                 # Returns without saving if we aren't
+                print('Attempted to save a character with a mismatched identifier')
                 return ('A different character with this name already exists')
             else:
                 # updates type to whatever type existing character is
@@ -820,9 +820,9 @@ class Character():
         # print((list(self.basePath.glob('**/' + name))[0]))
         try:
             infile = open(list(self.basePath.glob('**/' + name))[0], 'rb')
-            print('TS:          first pickle load started: ' + str(datetime.utcnow()))
+            print('TS:          first JSON load started: ' + str(datetime.utcnow()))
             data = json.load(infile)
-            print('TS:          first pickle load finished: ' + str(datetime.utcnow()))
+            print('TS:          first JSON load finished: ' + str(datetime.utcnow()))
             infoF = Path(list(self.basePath.glob('**/' + name))[0]).parent / ('info.' + data['name'])
             infile.close()
             #	print('successfully unpickled')
