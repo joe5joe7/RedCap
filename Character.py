@@ -766,8 +766,8 @@ class Character():
             'formsXP' : self.formsXP,
         }
 
-        with open(self.filepaths[type] / self.name, 'wb') as saveFile:
-            json.dump(self,data)
+        with open(self.filepaths[type] / self.name, 'w') as saveFile:
+            json.dump(data,saveFile)
 
         try:
             shutil.rmtree(self.filepaths[type] / ('info.' + self.name))
