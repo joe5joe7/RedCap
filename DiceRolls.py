@@ -154,7 +154,7 @@ class DiceRolls(commands.Cog):
     async def roll_stress(self, ctx, *args):
         #print('TS: Stress roll initiated: ' + str(datetime.utcnow()))
         #print('TS: Time for DateTime: ' + str(datetime.utcnow()))
-        result = random.randint(1, 10)
+        result = random.randint(0, 9)
         roller = Character(self.nlp,await self.basePath(ctx))
         #print('TS: Character template initiated: ' + str(datetime.utcnow()))
         for x in args:
@@ -187,7 +187,6 @@ class DiceRolls(commands.Cog):
             None
         #print(roller.name)
         #print('TS: Checked association and removed name from args: ' + str(datetime.utcnow()))
-        rando = random.randint(1, 10)
         #   print('random number generated, ' + str(rando))
         if roller.name != 'default':
             try:
