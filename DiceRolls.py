@@ -14,7 +14,7 @@ import spacy
 from datetime import datetime
 
 style = 'blue'
-from Tools import Tools
+import discord
 from CharacterSheets import CharacterSheet
 
 
@@ -24,21 +24,22 @@ class DiceRolls(commands.Cog):
         self.__last_member = None
         self.associations = {}
         self.nlp = spacy.load('en_core_web_lg')
+        self.memberList = {}
 
     async def basePath(self,ctx,msg = False):
         if ctx.guild != None:
             return(Path.cwd()/'servers'/str(ctx.guild.id))
         if ctx.guild == None:
             member = ctx.message.author
-            t = Tools(self.bot)
-            if str(member.id) in t.memberList:
+            self.updateMemberList()
+            if str(member.id) in self.memberList:
                 try:
                     if msg:
-                        await member.send('Currently associated with the guild ' + t.memberList[str(member.id)][2] + ', if you would like to upload to a different server use the !register command there.')
+                        await member.send('Currently associated with the guild ' + self.memberList[str(member.id)][2] + ', if you would like to upload to a different server use the !register command there.')
                 except:
                         await member.send('Server regristration has been updated since last use, please use !register in your server of choice to use dms with RedCap. Thank you!')
                         raise Exception
-                return (Path.cwd()/'servers'/str(t.memberList[str(member.id)][1]))
+                return (Path.cwd()/'servers'/str(self.memberList[str(member.id)][1]))
             await member.send('You are currently not registered to a server. Please use the !register command in your server of choice before using dms with RedCap. Thank you!')
             raise Exception
             return(Path.cwd()/'servers'/'unClassified')
@@ -379,6 +380,24 @@ class DiceRolls(commands.Cog):
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CheckFailure):
             await ctx.send(DiscordStyle.style('You do not have the correct role for this command.', 'red'))
+
+    def updateMemberList(self):
+        try:
+            a = open(Path.cwd()/'servers'/'members.txt','x')
+            a.close()
+        except:
+            members = open(Path.cwd()/'servers'/'members.txt','r')
+            membersData = members.readlines()
+            members.close()
+            #print(membersData)
+            for line in membersData:
+                memberInfo = line.split(' | ')
+                copy = memberInfo.copy()
+                y = 0
+                for x in copy:
+                    memberInfo[y] = x.replace('\|','|')
+                    y+=1
+                self.memberList[memberInfo[0]] = memberInfo[1:].copy()
 
 
 def setup(bot):
