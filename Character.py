@@ -219,7 +219,7 @@ class Flaw(VirtueFlaw):
 
 
 class Ability():
-    def __init__(self, name, speciality='default'):
+    def __init__(self, name, speciality='default',specification='none'):
         self.referencePath = Path.cwd() / 'referenceFiles'
         self.types = ('(General)', '(Academic)', '(Arcane)', '(Martial)', '(Supernatural)')
         self.abilitiesRef = {'name': '', 'description': '', 'needTraining': False, 'specialties': [],
@@ -245,13 +245,22 @@ class Ability():
                 similarity = Levenshtein.distance(x, name.upper())
             else:
                 pass
+        self.base = self.name
+        try:
+            modularPart = re.search(r'\((.*?)\)',self.name).group(1)
+            if specification != 'none':
+                self.name = self.name.replace('('+modularPart+')',specification)
+        except AttributeError:
+            pass
+        except FileNotFoundError:
+            print('Reference File not found for ' + self.name)
         if speciality == 'default':
-            self.specialty = random.choice(self.abilitiesLib[self.name]['specialties'])
+            self.specialty = random.choice(self.abilitiesLib[self.base]['specialties'])
         else:
             self.specialty = speciality
-        self.description = self.abilitiesLib[self.name]['description']
-        self.needTraining = self.abilitiesLib[self.name]['needTraining']
-        self.type = self.abilitiesLib[self.name]['type']
+        self.description = self.abilitiesLib[self.base]['description']
+        self.needTraining = self.abilitiesLib[self.base]['needTraining']
+        self.type = self.abilitiesLib[self.base]['type']
 
     def addXp(self, xp):
         self.xp += xp
@@ -336,6 +345,7 @@ class Ability():
 
 class Character():
     def __init__(self,nlp, basePath=(Path.cwd() / 'servers' / 'unClassified'), name='default'):
+        self.referencePath = Path.cwd() / 'referenceFiles'
         self.nlp = nlp
         self.name = name
         self.basePath = basePath
@@ -463,6 +473,32 @@ class Character():
         # print('current spent points: ' + str(self.checkPoints()))
         return (self.characteristics)
 
+    def weightedSim(self,keyWord,refList,mag = 10.0):
+        keyToken = self.nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
+        finalList = []
+        weight = []
+        for x in refList:
+            # Generate check the similarity of each abilities to the keyword given, and create a list of virtues and their similarity
+            testToken = self.nlp(x)
+            sim = keyToken.similarity(testToken)
+            weight.append(sim)
+            finalList.append(x)
+
+        # Turn weight into a weighted probability list with each weight corresponding to its ability, and remove any values under 0
+        c = weight.copy()
+        c2 = c.copy()
+        popped = 0
+        for x in range(len(c)):
+            if c[x] <= 0:
+                c2.pop(x - popped)
+                finalList.pop(x - popped)
+                popped += 1
+        c = [x * 100.0 for x in c2]
+        c2 = [pow(x, mag) for x in c]
+        total = sum(c2)
+        weight = [x / total for x in c2]
+        return(finalList,weight)
+
     def genSimStats(self,*args):
         points = 7
         charistics = [('Intelligence','int'),('Perception','per'),('Strength','str'),('Stamina','sta'),('Presence','pre'),('Communication','com'),('Dexterity','dex'),('Quickness','qik')]
@@ -482,102 +518,124 @@ class Character():
         self.genStats(charisticList[0][1] + ' ' + charisticList[1][1])
 
     def genGrogAbilities(self,age,*args):
-        print('TS: gen Grog starting abilities started: ' + str(datetime.utcnow()))
+        print('TS: gen Grog abilities started: ' + str(datetime.utcnow()))
         keyWord = ''
         for word in args:
             keyWord += word + ' '
         keyWord = keyWord.strip()
 
-
-        keyToken = self.nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
         a = Ability('placeholder')
-        abiRefList = list(a.abilitiesLib.values())
-        abiList = []
-        weight = []
-        for abi in abiRefList:
-            # Generate check the similarity of each abilities to the keyword given, and create a list of virtues and their similarity
-            abiToken = self.nlp(abi['name'])
-            sim = keyToken.similarity(abiToken)
-            weight.append(sim)
-            abiList.append(abi['name'])
-
-        # Turn weight into a weighted probability list with each weight corresponding to its ability, and remove any values under 0
-        c = weight.copy()
-        c2 = c.copy()
-        popped = 0
-        for x in range(len(c)):
-            if c[x] <= 0:
-                c2.pop(x - popped)
-                abiList.pop(x - popped)
-                popped += 1
-        c = [x * 100.0 for x in c2]
-        c2 = [pow(x, 10.0) for x in c]
-        total = sum(c2)
-        weight = [x / total for x in c2]
+        wList = self.weightedSim(keyWord,a.abilitiesLib.keys())
+        abiList = wList[0]
+        weight = wList[1]
 
         xp = age*15
         while xp > 0:
             cAbi = numpy.random.choice(abiList, p=weight)
+            print(cAbi)
             try:
-                cAbi = self.addAbility(cAbi)
-            except alreadyExist:
-                cAbi = self.closestAbi(cAbi)
+                modular = re.search('\(([^)]+)\)',cAbi)[0]
+                if (self.referencePath/cAbi).exists():
+                    with open(self.referencePath/cAbi,'r') as refFile:
+                        ref = json.load(refFile)
+                        wList = self.weightedSim(keyWord,ref)
+                        try:
+                            copy = cAbi
+                            cAbi = self.addAbilityCheck(cAbi,specification=numpy.random.choice(wList[0],p=wList[1]))
+                            if cAbi == 'False':
+                                        print('Ability not allowed ' + copy)
+                                        num = abiList.index(copy)
+                                        abiList.pop(num)
+                                        weight.pop(num)
+                                        total = sum(weight)
+                                        c2 = weight.copy()
+                                        weight = [x / total for x in c2]
+                                        continue
+                        except alreadyExist:
+                            cAbi = self.closestAbi(cAbi)
+            except TypeError:
+                try:
+                    copy = cAbi
+                    cAbi = self.addAbilityCheck(cAbi)
+                    if cAbi == 'False':
+                                print('Ability not allowed ' + copy)
+                                num = abiList.index(copy)
+                                abiList.pop(num)
+                                weight.pop(num)
+                                total = sum(weight)
+                                c2 = weight.copy()
+                                weight = [x / total for x in c2]
+                                continue
+
+                except alreadyExist:
+                    cAbi = self.closestAbi(cAbi)
+            except Exception as e:
+                print('Unexpected exception!')
+                print(e)
             self.abilities[cAbi].addXp(5)
             xp -= 5
 
 
-        print('TS: gen Grog starting abilities completed: ' + str(datetime.utcnow()))
+        print('TS: gen Grog abilities completed: ' + str(datetime.utcnow()))
+
+
 
     def genStartingAbilities(self,*args):
         print('TS: gen Grog starting abilities started: ' + str(datetime.utcnow()))
-        self.addAbility('living language')
-        self.abilities['LIVING LANGUAGE'].setScore(5)
-        if (Path.cwd()/'referenceFiles'/'languages').exists():
-            with open(Path.cwd()/'referenceFiles'/'languages','r') as langFile:
-                lang = json.load(langFile)
-                self.abilities[random.choice(lang)[1]] = self.abilities['LIVING LANGUAGE']
-                del self.abilities['LIVING LANGUAGE']
 
         keyWord = ''
         for word in args:
             keyWord += word + ' '
         keyWord = keyWord.strip()
+        if (self.referencePath/'(LIVING LANGUAGE)').exists():
+            with open(self.referencePath/'(LIVING LANGUAGE)','r') as langFile:
+                lang = json.load(langFile)
+                wList = self.weightedSim(keyWord,lang)
+                langName = self.addAbilityCheck('(LIVING LANGUAGE)',specification=numpy.random.choice(wList[0],p=wList[1]))
+        self.abilities[langName].setScore(5)
 
 
-        keyToken = self.nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
-        a = Ability('placeholder')
-        #abiRefList = list(a.abilitiesLib.values())
-        abiRefList = ['(Area) Lore','Athletics','Awareness','Brawl','Charm','Folk Ken','Guile','Living Language','Stealth','Survival','Swim']
-        abiList = []
-        weight = []
-        for abi in abiRefList:
-            # Generate check the similarity of each abilities to the keyword given, and create a list of virtues and their similarity
-            abiToken = self.nlp(abi)
-            sim = keyToken.similarity(abiToken)
-            weight.append(sim)
-            abiList.append(abi)
-
-        # Turn weight into a weighted probability list with each weight corresponding to its ability, and remove any values under 0
-        c = weight.copy()
-        c2 = c.copy()
-        popped = 0
-        for x in range(len(c)):
-            if c[x] <= 0:
-                c2.pop(x - popped)
-                abiList.pop(x - popped)
-                popped += 1
-        c = [x * 100.0 for x in c2]
-        c2 = [pow(x, 5.0) for x in c]
-        total = sum(c2)
-        weight = [x / total for x in c2]
-
+        abiRefList = ['(AREA) LORE','Athletics','Awareness','Brawl','Charm','Folk Ken','Guile','(LIVING LANGUAGE)','Stealth','Survival','Swim']
+        wList = self.weightedSim(keyWord,abiRefList,mag=5.0)
+        abiList = wList[0]
+        weight = wList[1]
         xp = 45
         while xp > 0:
             cAbi = numpy.random.choice(abiList, p=weight)
             try:
-                cAbi = self.addAbility(cAbi)
-            except alreadyExist:
-                cAbi = self.closestAbi(cAbi)
+                modular = re.search('\(([^)]+)\)',cAbi)[0]
+                if (self.referencePath/cAbi).exists():
+                    with open(self.referencePath/cAbi,'r') as refFile:
+                        ref = json.load(refFile)
+                        wList = self.weightedSim(keyWord,ref)
+                        try:
+                            copy = cAbi
+                            cAbi = self.addAbilityCheck(cAbi,specification=numpy.random.choice(wList[0],p=wList[1]))
+                            if cAbi == 'False':
+                                num = abiList.index(copy)
+                                abiList.pop(num)
+                                weight.pop(num)
+                                total = sum(weight)
+                                c2 = weight.copy()
+                                weight = [x / total for x in c2]
+                                continue
+
+                        except alreadyExist:
+                            cAbi = self.closestAbi(cAbi)
+            except TypeError:
+                try:
+                    copy = cAbi
+                    cAbi = self.addAbilityCheck(cAbi)
+                    if cAbi == 'False':
+                                num = abiList.index(copy)
+                                abiList.pop(num)
+                                weight.pop(num)
+                                total = sum(weight)
+                                c2 = weight.copy()
+                                weight = [x / total for x in c2]
+                                continue
+                except alreadyExist:
+                    cAbi = self.closestAbi(cAbi)
             self.abilities[cAbi].addXp(5)
             xp -= 5
         print('TS: gen Grog starting abilities completed: ' + str(datetime.utcnow()))
@@ -604,33 +662,10 @@ class Character():
             for word in args:
                 keyWord += word + ' '
             keyWord = keyWord.strip()
-
-
-            keyToken = self.nlp(re.sub(r'([^\s\w]|_)+', "", keyWord))
             v = Virtue('placeholder')
-            virtRefList = list(v.virtuesLib.values())
-            virtList = []
-            weight = []
-            for virtue in virtRefList:
-                # Generate check the similarity of each virtue to the keyword given, and create a list of virtues and their similarity
-                virtToken = self.nlp(virtue['name'])
-                sim = keyToken.similarity(virtToken)
-                weight.append(sim)
-                virtList.append(virtue['name'])
-
-            # Turn weight into a weighted probability list with each weight corresponding to its virtue, and remove any values under 0
-            c = weight.copy()
-            c2 = c.copy()
-            popped = 0
-            for x in range(len(c)):
-                if c[x] <= 0:
-                    c2.pop(x - popped)
-                    virtList.pop(x - popped)
-                    popped += 1
-            c = [x * 100.0 for x in c2]
-            c2 = [pow(x, 10.0) for x in c]
-            total = sum(c2)
-            weight = [x / total for x in c2]
+            wList = self.weightedSim(keyWord,list(v.virtuesLib.keys()))
+            virtList = wList[0]
+            weight = wList[1]
 
             socialStatus = False
             while virtuePoints < points:
@@ -678,27 +713,9 @@ class Character():
 
             flawPoints = 0
             f = Flaw('placeholder')
-            FlawRefList = list(f.virtuesLib.values())
-            FlawList = []
-            weight = []
-            for flaw in FlawRefList:
-                flawToken = self.nlp(flaw['name'])
-                sim = keyToken.similarity(flawToken)
-                weight.append(sim)
-                FlawList.append(flaw['name'])
-            c = weight.copy()
-            c2 = c.copy()
-            popped = 0
-            for x in range(len(c)):
-                if c[x] <= 0:
-                    c2.pop(x - popped)
-                    FlawList.pop(x - popped)
-                    popped += 1
-
-            c = [x * 100.0 for x in c2]
-            c2 = [pow(x, 10.0) for x in c]
-            total = sum(c2)
-            weight = [x / total for x in c2]
+            wList = self.weightedSim(keyWord,list(f.virtuesLib.keys()))
+            FlawList = wList[0]
+            weight = wList[1]
 
             while flawPoints < points:
                 choice = numpy.random.choice(FlawList, p=weight)
@@ -757,11 +774,20 @@ class Character():
         return tempFlaw.name
 
     def closestAbi(self,name):
-        tempAbi = Ability(name)
-        return tempAbi.name
+        similarity = 100
+        result = ''
+        for x in self.abilities.keys():
+            # print('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
+            if Levenshtein.distance(x, name.upper()) < similarity:
+                result = x
+                similarity = Levenshtein.distance(x, name.upper())
+            else:
+                pass
 
-    def addAbility(self, name, speciality='default'):
-        tempAbi = Ability(name, speciality)
+        return result
+
+    def addAbility(self, name, speciality='default',specification='none'):
+        tempAbi = Ability(name, speciality,specification)
         try:
             self.abilities[tempAbi.name]
             raise alreadyExist('ability already exists')
@@ -772,12 +798,13 @@ class Character():
         self.abilities[tempAbi.name] = tempAbi
         return (tempAbi.name)
 
-    def addAbilityCheck(self,name, speciality='default'):
-        tempAbi = Ability(name)
-        #('(General)', '(Academic)', '(Arcane)', '(Martial)', '(Supernatural)')
+    def addAbilityCheck(self,name, speciality='default',specification='none'):
+        tempAbi = Ability(name, speciality,specification)
         try:
             self.abilities[tempAbi.name]
-            return False
+            raise alreadyExist('ability already exists')
+        except alreadyExist:
+            raise alreadyExist('ability already exists')
         except:
             None
         if tempAbi.type == '(General)':
@@ -793,16 +820,18 @@ class Character():
                     self.abilities[tempAbi.name] = tempAbi
                     return(tempAbi.name)
                 else:
-                    return False
+                    return 'False'
             elif self.hasVirtue('WISE ONE'):
                 if self.virtues['WISE ONE'].speciality == '(Academic)':
                     self.abilities[tempAbi.name] = tempAbi
                     return(tempAbi.name)
                 else:
-                    return False
+                    return 'False'
+            else:
+                return 'False'
 
         elif tempAbi.type == '(Arcane)':
-            if self.hasVirtue('ARCANE LORE'):
+            if self.hasVirtue('ARCANE LORE') or self.hasVirtue('FAILED APPRENTICE') or self.hasVirtue('REDCAP'):
                 self.abilities[tempAbi.name] = tempAbi
                 return(tempAbi.name)
             elif self.hasVirtue('WISE ONE'):
@@ -810,7 +839,43 @@ class Character():
                     self.abilities[tempAbi.name] = tempAbi
                     return(tempAbi.name)
                 else:
-                    return False
+                    return 'False'
+            elif self.hasVirtue('CUSTOS'):
+                if self.virtues['CUSTOS'].speciality == '(Arcane)':
+                    self.abilities[tempAbi.name] = tempAbi
+                    return(tempAbi.name)
+                else:
+                    return 'False'
+            else:
+                return 'False'
+
+        elif tempAbi.type == '(Martial)':
+            if self.hasVirtue('BERSERK') or self.hasVirtue('KNIGHT') or self.hasVirtue('MERCENARY CAPTAIN') or self.hasVirtue('REDCAP') or self.hasVirtue('WARRIOR'):
+                self.abilities[tempAbi.name] = tempAbi
+                return(tempAbi.name)
+            elif self.hasVirtue('CUSTOS'):
+                if self.virtues['CUSTOS'].speciality == '(Martial)':
+                    self.abilities[tempAbi.name] = tempAbi
+                    return(tempAbi.name)
+                else:
+                    return 'False'
+            else:
+                return 'False'
+        elif tempAbi.type == '(Supernatural)':
+            if self.hasVirtue('FAILED APPRENTICE'):
+                self.abilities[tempAbi.name] = tempAbi
+                return(tempAbi.name)
+            elif self.hasVirtue(tempAbi.name):
+                self.abilities[tempAbi.name] = tempAbi
+                return(tempAbi.name)
+            elif tempAbi.name == 'SHAPESHIFT' and self.hasVirtue('SHAPESHIFTER'):
+                self.abilities[tempAbi.name] = tempAbi
+                return(tempAbi.name)
+            elif tempAbi.name == 'SECOND SIGHT' and self.hasVirtue('STRONG FAERIE BLOOD'):
+                self.abilities[tempAbi.name] = tempAbi
+                return(tempAbi.name)
+            else:
+                return 'False'
 
 
     def hasVirtue(self,virtueName):
@@ -822,20 +887,23 @@ class Character():
     def save(self, type='g'):
         # type is the type of character which determines the save folder
         print('saving ' + self.name)
+        oldType = type
         try:
             # Tries to access a saved character with the same name
             existingPath = list(self.basePath.glob('**/' + self.name))[0]
-            tempChar = Character(self.nlp)
+            tempChar = Character(self.nlp,self.basePath)
             tempChar.load(self.name)
+            print('tempChar loaded')
 
             # Checks the identifier to see if we are saving an upadated version of the existing character.
             if tempChar.identifier != self.identifier:
                 # Returns without saving if we aren't
                 print('Attempted to save a character with a mismatched identifier')
+                print('Current identifier: ' + str(self.identifier) + ' Saved identifier: ' + str(tempChar.identifier))
                 return ('A different character with this name already exists')
             else:
                 # updates type to whatever type existing character is
-                type = list(self.filepaths.keys())[list(self.filepaths.values()).index(existingPath.parents[0])]
+                oldType = list(self.filepaths.keys())[list(self.filepaths.values()).index(existingPath.parents[0])]
                 pass
 
         except Exception as e:
@@ -865,62 +933,69 @@ class Character():
                     identF.write(str(self.identifier))
                     identF.close()
 
-        #Create JSON serialable data value
-        data = {
-            'name': self.name,
-            'characteristics' : self.characteristics,
-            'identifier' : self.identifier,
-            'warpingScore' : self.warpingScore,
-            'confidence' : self.confidence,
-            'covenant' : self.covenant,
-            'age' : self.age,
-            'techniques' : self.techniques,
-            'techniquesXP' : self.techniquesXP,
-            'forms' : self.forms,
-            'formsXP' : self.formsXP,
-        }
 
-        with open(self.filepaths[type] / self.name, 'w') as saveFile:
-            json.dump(data,saveFile)
-
+        print('saving')
         try:
-            shutil.rmtree(self.filepaths[type] / ('info.' + self.name))
-            os.mkdir(self.filepaths[type]/('info.' + self.name))
-        except:
-            None
-        for x in self.abilities:
-            p = self.filepaths[type] / ('info.' + self.name)
+            #Create JSON serialable data value
+            data = {
+                'name': self.name,
+                'characteristics' : self.characteristics,
+                'identifier' : self.identifier,
+                'warpingScore' : self.warpingScore,
+                'confidence' : self.confidence,
+                'covenant' : self.covenant,
+                'age' : self.age,
+                'techniques' : self.techniques,
+                'techniquesXP' : self.techniquesXP,
+                'forms' : self.forms,
+                'formsXP' : self.formsXP,
+            }
+
+            if (self.filepaths[oldType] / self.name).exists():
+                (self.filepaths[oldType] / self.name).unlink()
+            with open(self.filepaths[type] / self.name, 'w') as saveFile:
+                json.dump(data,saveFile)
+
             try:
-                #	print(p)
-                p.mkdir(parents=True, exist_ok=True)
-            #	print('made directory')
+                shutil.rmtree(self.filepaths[oldType] / ('info.' + self.name))
+                os.mkdir(self.filepaths[type]/('info.' + self.name))
             except:
                 None
-            try:
-                saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('ability.' + x), 'wb')
-            except Exception as e:
-                print(e)
-            pickle.dump(self.abilities[x], saveFile,protocol=-1)
-        for x in self.virtues:
-            p = self.filepaths[type] / ('info.' + self.name)
-            try:
-                #	print(p)
-                p.mkdir(parents=True, exist_ok=True)
-            #	print('made directory')
-            except:
-                None
-            saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('virute.' + x), 'wb')
-            pickle.dump(self.virtues[x], saveFile,protocol=-1)
-        for x in self.flaws:
-            p = self.filepaths[type] / ('info.' + self.name)
-            try:
-                #	print(p)
-                p.mkdir(parents=True, exist_ok=True)
-            #	print('made directory')
-            except:
-                None
-            saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('flaw.' + x), 'wb')
-            pickle.dump(self.flaws[x], saveFile,protocol=-1)
+            for x in self.abilities:
+                p = self.filepaths[type] / ('info.' + self.name)
+                try:
+                    #	print(p)
+                    p.mkdir(parents=True, exist_ok=True)
+                #	print('made directory')
+                except:
+                    None
+                try:
+                    saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('ability.' + x), 'wb')
+                except Exception as e:
+                    print(e)
+                pickle.dump(self.abilities[x], saveFile,protocol=-1)
+            for x in self.virtues:
+                p = self.filepaths[type] / ('info.' + self.name)
+                try:
+                    #	print(p)
+                    p.mkdir(parents=True, exist_ok=True)
+                #	print('made directory')
+                except:
+                    None
+                saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('virtue.' + x), 'wb')
+                pickle.dump(self.virtues[x], saveFile,protocol=-1)
+            for x in self.flaws:
+                p = self.filepaths[type] / ('info.' + self.name)
+                try:
+                    #	print(p)
+                    p.mkdir(parents=True, exist_ok=True)
+                #	print('made directory')
+                except:
+                    None
+                saveFile = open(self.filepaths[type] / ('info.' + self.name) / ('flaw.' + x), 'wb')
+                pickle.dump(self.flaws[x], saveFile,protocol=-1)
+        except Exception as e:
+            print(e)
         return ('Character saved')
 
     # print(self.characteristics)
@@ -933,7 +1008,7 @@ class Character():
         # print(name)
         # print((list(self.basePath.glob('**/' + name))[0]))
         try:
-            infile = open(list(self.basePath.glob('**/' + name))[0], 'rb')
+            infile = open(list(self.basePath.glob('**/' + name))[0], 'r')
             #print('TS:          first JSON load started: ' + str(datetime.utcnow()))
             data = json.load(infile)
             #print('TS:          first JSON load finished: ' + str(datetime.utcnow()))

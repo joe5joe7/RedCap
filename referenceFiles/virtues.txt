@@ -1,9 +1,3 @@
-HERMETIC APPRENTICE
-Free, Social Status
-You are an apprentice of the Order of
-Hermes. All apprentices must take this as their Social
-Status, and only apprentices may take it.
-
 ADEPT LABORATORY STUDENT
 Minor, Hermetic
 You digest the instruction of others quite
@@ -355,6 +349,7 @@ may have some Supernatural Abilities. You may
 learn Magic Theory and serve a magus as a laboratory assistant. The Wealthy Virtue and Poor
 Flaw affect you normally. This Virtue is available
 to male and female characters.
+
 
 FLEXIBLE FORMULAIC MAGIC
 Major, Hermetic

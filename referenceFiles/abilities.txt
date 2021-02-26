@@ -1,27 +1,3 @@
-ORDER OF HERMES LORE*
-Knowledge of the legends, history, structure, operation, and goals of the specified organization. Organizations can be as large as the
-Church, or as small as a local craft guild. The
-smaller the organization, the more detailed
-your knowledge. Specialties: personalities, history, politics.
-(General)
-
-HOUSE CRIAMON LORE*
-Lore about House Criamon
-Specialties: initiating others, initiating self, altering initiations.
-(Arcane)
-
-LATIN*
-A langauge skill covering the usage of Latin.
-Specialties:poetry, prose, specific dialects,
-expansive vocabulary, specific technical vocabulary, slang, storytelling.
-(Academic)
-
-FRENCH*
-A language skill covering the usage of French.
-Specialties:poetry, prose, specific dialects,
-expansive vocabulary, specific technical vocabulary, slang, storytelling.
-(General)
-
 (AREA) LORE*
 Knowledge of one particular region,
 covenant, or even a village. It includes knowing
@@ -422,7 +398,7 @@ trying to spot the character using Legerdemain
 receives a +3 bonus. Specialties: filching, picking
 pockets, “magic” tricks. (General)
 
-LIVING LANGUAGE*
+(LIVING LANGUAGE)*
 Fluency in a particular living language.
 Rather than a die roll modifier, your score in
 this Knowledge measures your ability to

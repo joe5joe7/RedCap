@@ -14,6 +14,7 @@ import DiscordStyle
 from Tools import Tools
 import re
 import spacy
+import shutil
 
 #TODO
 # add more aliases for lowercased commands
@@ -66,6 +67,7 @@ class CharacterSheet(commands.Cog):
             grog.genStartingAbilities(*args)
             grog.age = random.randint(18,60)
             grog.genGrogAbilities(grog.age,*args)
+            grog.save('tg')
         except Exception as e:
             print(e)
         # focus = []
@@ -84,6 +86,18 @@ class CharacterSheet(commands.Cog):
         # grog.genVirtuesFlaws(3)
         await ctx.send(DiscordStyle.style(grog.display(),self.style))
         # grog.save('tg')
+
+    @commands.command(name='saveGrog',help='Saves a temp grog')
+    async def saveGrog(self,ctx,name: str):
+        temp = Character(self.nlp,await self.basePath(ctx),'temp')
+        temp.load(name)
+        temp.save('g')
+        await ctx.send(DiscordStyle.style(temp.name + ' saved!',self.style))
+
+    @commands.command(name='purge',help='Purges temp grogs')
+    async def purge(self,ctx):
+        shutil.rmtree(await self.basePath(ctx) / 'characters' / 'tempGrogs')
+        await ctx.send(DiscordStyle.style('Temp grogs purged!',self.style))
 
     @commands.command(name='loadChar',help='loads a previously generated character.')
     async def loadChar(self,ctx,name: str):
