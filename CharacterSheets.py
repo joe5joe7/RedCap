@@ -11,7 +11,6 @@ from discord.ext import commands
 from pathlib import Path
 import names
 import DiscordStyle
-from Tools import Tools
 import re
 import spacy
 import shutil
@@ -33,7 +32,25 @@ class CharacterSheet(commands.Cog):
         self.style='blue'
         self.associations = {}
         self.nlp = spacy.load('en_core_web_lg')
-        #self.nlp = 'dummyNLP'
+        self.memberList = {}
+
+        self.updateMemberList()
+
+
+        try:
+            (Path.cwd() / 'referenceFiles'/'libraries').mkdir(parents=True)
+        except:
+            pass
+        try:
+            (Path.cwd() / 'referenceFiles'/'abilitySpecifications').mkdir(parents=True)
+        except:
+            pass
+        if not (Path.cwd() / 'referenceFiles'/'libraries'/'abilityLib').exists():
+            print('Ability library does not exist in expected place ' + str(Path.cwd() / 'referenceFiles'/'libraries'/'abilityLib'))
+        if not (Path.cwd() / 'referenceFiles'/'libraries'/'virtueLib').exists():
+            print('Virtue library does not exist in expected place ' + str(Path.cwd() / 'referenceFiles'/'libraries'/'virtueLib'))
+        if not (Path.cwd() / 'referenceFiles'/'libraries'/'flawLib').exists():
+            print('Virtue library does not exist in expected place ' + str(Path.cwd() / 'referenceFiles'/'libraries'/'flawLib'))
 
     
     async def basePath(self,ctx,msg = False):
@@ -41,18 +58,18 @@ class CharacterSheet(commands.Cog):
             return(Path.cwd()/'servers'/str(ctx.guild.id))
         if ctx.guild == None:
             member = ctx.message.author
-            t = Tools(self.bot)
-            if str(member.id) in t.memberList:
+            self.updateMemberList()
+            if str(member.id) in self.memberList:
                 try:
                     if msg:
-                        await member.send('Currently associated with the guild ' + t.memberList[str(member.id)][2] + ', if you would like to upload to a different server use the !register command there.')
+                        await member.send('Currently associated with the guild ' + self.memberList[str(member.id)][2] + ', if you would like to upload to a different server use the !register command there.')
                 except:
                         await member.send('Server regristration has been updated since last use, please use !register in your server of choice to use dms with RedCap. Thank you!')
                         raise Exception
-                return (Path.cwd()/'servers'/str(t.memberList[str(member.id)][1]))
+                return (Path.cwd()/'servers'/str(self.memberList[str(member.id)][1]))
             await member.send('You are currently not registered to a server. Please use the !register command in your server of choice before using dms with RedCap. Thank you!')
             raise Exception
-            return(Path.cwd()/'servers'/'unClassified')
+            #return(Path.cwd()/'servers'/'unClassified')
 
     @commands.command(name='genGrog',help='Generates a random grog.')
     async def genGrog(self,ctx,*args):
@@ -65,7 +82,7 @@ class CharacterSheet(commands.Cog):
             grog.genVirtuesFlawsGrog(*args)
             grog.genSimStats()
             grog.genStartingAbilities(*args)
-            grog.age = random.randint(18,60)
+            grog.age = random.randint(18,35)
             grog.genGrogAbilities(grog.age,*args)
             grog.save('tg')
         except Exception as e:
@@ -383,7 +400,23 @@ class CharacterSheet(commands.Cog):
         except Exception as e:
             print(e)
 
-
+    def updateMemberList(self):
+        try:
+            a = open(Path.cwd()/'servers'/'members.txt','x')
+            a.close()
+        except:
+            members = open(Path.cwd()/'servers'/'members.txt','r')
+            membersData = members.readlines()
+            members.close()
+            #print(membersData)
+            for line in membersData:
+                memberInfo = line.split(' | ')
+                copy = memberInfo.copy()
+                y = 0
+                for x in copy:
+                    memberInfo[y] = x.replace('\|','|')
+                    y+=1
+                self.memberList[memberInfo[0]] = memberInfo[1:].copy()
 
 
 

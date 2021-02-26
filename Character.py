@@ -52,7 +52,7 @@ class VirtueFlaw():
         self.valueTypes = ('Minor', 'Major', 'Free', 'Special')
         self.virtuesRef = {'name': '', 'description': '', 'value': '', 'type': ''}
         self.virtuesLib = {}
-        self.referencePath = Path.cwd() / 'referenceFiles'
+        self.referencePath = Path.cwd() / 'referenceFiles' / 'libraries'
         self.speciality = speciality
         self.flags = []
         try:
@@ -65,67 +65,9 @@ class VirtueFlaw():
         self.speciality = speciality
 
     def loadReference(self):
-        with open(self.referenceFile, 'r', encoding='utf-8') as file:
-            refsheet = file.readlines()
-        firstIteration = True
-        newVirtue = self.virtuesRef.copy()
-        oldLine = refsheet[0]
-        tempDescription = []
-        for line in refsheet:
-            if firstIteration:
-                for x in self.valueTypes:
-                    if x in line:
-                        if x != 'Special':
-                            for y in self.types:
-                                if x + ', ' + y in line:
-                                    newVirtue['name'] = oldLine.strip()
-                                    newVirtue['value'] = x
-                                    newVirtue['type'] = y
-                                    firstIteration = False
-                                    continue
-                        elif x == 'Special':
-                            newVirtue['name'] = oldLine.strip()
-                            newVirtue['value'] = 'Special'
-                            newVirtue['type'] = 'Special'
-                            firstIteration = False
-                            continue
-                oldLine = line
-            else:
-                for x in self.valueTypes:
-                    if x in line:
-                        if x != 'Special':
-                            for y in self.types:
-                                if x + ', ' + y in line:
-                                    description = ''
-                                    for d in tempDescription[1:-1]:
-                                        description += d
-                                    tempDescription = []
-                                    newVirtue['description'] = description
-                                    self.virtuesLib[newVirtue['name']] = newVirtue
-                                    newVirtue = {}
-                                    newVirtue['name'] = oldLine.strip()
-                                    newVirtue['value'] = x
-                                    newVirtue['type'] = y
-                                    continue
-                        elif x == 'Special':
-                            description = ''
-                            for d in tempDescription[1:-1]:
-                                description += d
-                            tempDescription = []
-                            newVirtue['description'] = description
-                            self.virtuesLib[newVirtue['name']] = newVirtue
-                            newVirtue = {}
-                            newVirtue['name'] = oldLine.strip()
-                            newVirtue['value'] = x
-                            newVirtue['type'] = x
-                            continue
-                tempDescription.append(line)
-                oldLine = line
-        description = ''
-        for d in tempDescription[1:-1]:
-            description += d
-        newVirtue['description'] = description
-        self.virtuesLib[newVirtue['name']] = newVirtue
+        with open(self.referenceFile,'r') as file:
+            self.virtuesLib = json.load(file)
+
 
     def printOptions(self):
         value = ''
@@ -174,7 +116,7 @@ class Virtue(VirtueFlaw):
     def __init__(self, name, speciality = 'default'):
         self.speciality = speciality
         super().__init__()
-        self.referenceFile = self.referencePath / 'virtues.txt'
+        self.referenceFile = self.referencePath / 'virtueLib'
         self.loadReference()
         similarity = 100
         for x in self.virtuesLib:
@@ -200,7 +142,7 @@ class Flaw(VirtueFlaw):
     def __init__(self, name, speciality = 'default'):
         self.speciality = speciality
         super().__init__()
-        self.referenceFile = self.referencePath / 'flaws.txt'
+        self.referenceFile = self.referencePath / 'flawLib'
         self.loadReference()
         similarity = 100
         for x in self.virtuesLib:
@@ -220,7 +162,7 @@ class Flaw(VirtueFlaw):
 
 class Ability():
     def __init__(self, name, speciality='default',specification='none'):
-        self.referencePath = Path.cwd() / 'referenceFiles'
+        self.referencePath = Path.cwd() / 'referenceFiles'/'libraries'
         self.types = ('(General)', '(Academic)', '(Arcane)', '(Martial)', '(Supernatural)')
         self.abilitiesRef = {'name': '', 'description': '', 'needTraining': False, 'specialties': [],
                              'type': self.types[0], 'xp': 0, 'score': 0}
@@ -275,49 +217,11 @@ class Ability():
         self.xp = xp
 
     def loadReference(self):
-        with open(self.referencePath / 'abilities.txt', 'r', encoding='utf-8') as file:
-            refsheet = file.readlines()
-        searchingFor = 'name'
-        newAbility = self.abilitiesRef.copy()
-        for line in refsheet:
-            if searchingFor == 'name':
-                if len(line) < 2:
-                    continue
-                elif line[-2] == '*':
-                    newAbility['needTraining'] = True
-                    data = line[:-2]
-                else:
-                    newAbility['needTraining'] = False
-                    data = line[:-1]
-                newAbility['name'] = data
-                searchingFor = 'description'
-                description = ''
-            elif searchingFor == 'description':
-                if 'Specialties:' in line:
-                    x = line.split('Specialties:')
-                    description = description + x[0]
-                    newAbility['description'] = description
-                    searchingFor = 'specialties'
-                    specialities = x[1]
-                else:
-                    description = description + line
-            elif searchingFor == 'specialties':
-                for type in self.types:
-                    if type in line:
-                        newAbility['type'] = type
-                        specialities = specialities + line.split(type)[0]
-                        specialities = specialities.replace(type, '').replace('\n', '').replace('.', '').split(',')
-                        for x in range(len(specialities)):
-                            specialities[x] = specialities[x].strip()
-                        newAbility['specialties'] = specialities
-                        self.abilitiesLib[newAbility['name']] = newAbility
-                        searchingFor = 'name'
-                        newAbility = {}
-                        break
-                    else:
-                        pass
-                if not type in line:
-                    specialities = specialities + line
+        if not (self.referencePath/'abilityLib').exists():
+            print('abilityLib does not exist in expected location ' + str(self.referencePath/'abilityLib'))
+        with open(self.referencePath/'abilityLib','r') as file:
+            self.abilitiesLib = json.load(file)
+
 
     def summary(self):
         return (
@@ -532,18 +436,17 @@ class Character():
         xp = age*15
         while xp > 0:
             cAbi = numpy.random.choice(abiList, p=weight)
-            print(cAbi)
             try:
                 modular = re.search('\(([^)]+)\)',cAbi)[0]
-                if (self.referencePath/cAbi).exists():
-                    with open(self.referencePath/cAbi,'r') as refFile:
+                if (self.referencePath/'abilitySpecifications'/cAbi).exists():
+                    with open(self.referencePath/'abilitySpecifications'/cAbi,'r') as refFile:
                         ref = json.load(refFile)
                         wList = self.weightedSim(keyWord,ref)
                         try:
                             copy = cAbi
                             cAbi = self.addAbilityCheck(cAbi,specification=numpy.random.choice(wList[0],p=wList[1]))
                             if cAbi == 'False':
-                                        print('Ability not allowed ' + copy)
+                                        #print('Ability not allowed ' + copy)
                                         num = abiList.index(copy)
                                         abiList.pop(num)
                                         weight.pop(num)
@@ -558,7 +461,7 @@ class Character():
                     copy = cAbi
                     cAbi = self.addAbilityCheck(cAbi)
                     if cAbi == 'False':
-                                print('Ability not allowed ' + copy)
+                                #print('Ability not allowed ' + copy)
                                 num = abiList.index(copy)
                                 abiList.pop(num)
                                 weight.pop(num)
@@ -572,6 +475,16 @@ class Character():
             except Exception as e:
                 print('Unexpected exception!')
                 print(e)
+            #print(str(self.abilities[cAbi].score) + ' score, compared with ' + str(max(math.ceil((self.age-30)/5+5),5)) + ' max.')
+            if self.abilities[cAbi].score >= max(math.ceil((self.age-30)/5+5),5):
+                #print(cAbi + ' has reached a max score of ' + str(self.abilities[cAbi].score))
+                num = abiList.index(copy)
+                abiList.pop(num)
+                weight.pop(num)
+                total = sum(weight)
+                c2 = weight.copy()
+                weight = [x / total for x in c2]
+                continue
             self.abilities[cAbi].addXp(5)
             xp -= 5
 
@@ -587,8 +500,8 @@ class Character():
         for word in args:
             keyWord += word + ' '
         keyWord = keyWord.strip()
-        if (self.referencePath/'(LIVING LANGUAGE)').exists():
-            with open(self.referencePath/'(LIVING LANGUAGE)','r') as langFile:
+        if (self.referencePath/'abilitySpecifications'/'(LIVING LANGUAGE)').exists():
+            with open(self.referencePath/'abilitySpecifications'/'(LIVING LANGUAGE)','r') as langFile:
                 lang = json.load(langFile)
                 wList = self.weightedSim(keyWord,lang)
                 langName = self.addAbilityCheck('(LIVING LANGUAGE)',specification=numpy.random.choice(wList[0],p=wList[1]))
@@ -604,8 +517,8 @@ class Character():
             cAbi = numpy.random.choice(abiList, p=weight)
             try:
                 modular = re.search('\(([^)]+)\)',cAbi)[0]
-                if (self.referencePath/cAbi).exists():
-                    with open(self.referencePath/cAbi,'r') as refFile:
+                if (self.referencePath/'abilitySpecifications'/cAbi).exists():
+                    with open(self.referencePath/'abilitySpecifications'/cAbi,'r') as refFile:
                         ref = json.load(refFile)
                         wList = self.weightedSim(keyWord,ref)
                         try:
@@ -663,10 +576,19 @@ class Character():
                 keyWord += word + ' '
             keyWord = keyWord.strip()
             v = Virtue('placeholder')
-            wList = self.weightedSim(keyWord,list(v.virtuesLib.keys()))
+            c1 = list(v.virtuesLib.keys())
+            c2 = list(v.virtuesLib.keys())
+            for x in c1:
+                tempVirt = Virtue(x)
+                if tempVirt.value == 'Major':
+                    c2.remove(x)
+                elif tempVirt.name == 'The Gift':
+                    c2.remove(x)
+                elif tempVirt.type == 'Hermetic':
+                    c2.remove(x)
+            wList = self.weightedSim(keyWord,c2)
             virtList = wList[0]
             weight = wList[1]
-
             socialStatus = False
             while virtuePoints < points:
                 skip = False
@@ -699,10 +621,11 @@ class Character():
                 else:
                     None
                 if randVirtue.value == 'Major':
-                    if (virtuePoints + 3) <= points:
-                        virtuePoints += 3
-                        self.virtues[randVirtue.name] = randVirtue
-                    else:
+                    # commented out because grogs are not allowed major virtues
+                    # if (virtuePoints + 3) <= points:
+                    #     virtuePoints += 3
+                    #     self.virtues[randVirtue.name] = randVirtue
+                    # else:
                         continue
 
                 elif randVirtue.value == 'Minor':
@@ -713,7 +636,19 @@ class Character():
 
             flawPoints = 0
             f = Flaw('placeholder')
-            wList = self.weightedSim(keyWord,list(f.virtuesLib.keys()))
+            c1 = list(f.virtuesLib.keys()).copy()
+            c2 = list(f.virtuesLib.keys()).copy()
+            for x in c1:
+                tempFlaw = Flaw(x)
+                if tempFlaw.value == 'Major':
+                    c2.remove(x)
+                elif tempFlaw.name == 'The Gift':
+                    c2.remove(x)
+                elif tempFlaw.type == 'Hermetic':
+                    c2.remove(x)
+                elif tempFlaw.type == 'Story':
+                    c2.remove(x)
+            wList = self.weightedSim(keyWord,c2)
             FlawList = wList[0]
             weight = wList[1]
 
@@ -807,6 +742,8 @@ class Character():
             raise alreadyExist('ability already exists')
         except:
             None
+
+
         if tempAbi.type == '(General)':
             self.abilities[tempAbi.name] = tempAbi
             return(tempAbi.name)
@@ -886,14 +823,14 @@ class Character():
 
     def save(self, type='g'):
         # type is the type of character which determines the save folder
-        print('saving ' + self.name)
+        #print('saving ' + self.name)
         oldType = type
         try:
             # Tries to access a saved character with the same name
             existingPath = list(self.basePath.glob('**/' + self.name))[0]
             tempChar = Character(self.nlp,self.basePath)
             tempChar.load(self.name)
-            print('tempChar loaded')
+            #print('tempChar loaded')
 
             # Checks the identifier to see if we are saving an upadated version of the existing character.
             if tempChar.identifier != self.identifier:
@@ -906,8 +843,7 @@ class Character():
                 oldType = list(self.filepaths.keys())[list(self.filepaths.values()).index(existingPath.parents[0])]
                 pass
 
-        except Exception as e:
-            print(e)
+        except IndexError:
             # If we don't find an existing character, we need to create an identifier
             try:
                 # Checking to make sure that we have an identifier.txt, if not creates one
@@ -934,7 +870,7 @@ class Character():
                     identF.close()
 
 
-        print('saving')
+        #print('saving')
         try:
             #Create JSON serialable data value
             data = {
