@@ -1071,11 +1071,11 @@ class Character():
                 formsOutput = ''
                 for x in list(self.forms.keys()):
                     if x != None:
-                        formsOutput += x + ': ' + str(self.forms[x] + '\n')
+                        formsOutput += x + ': ' + str(self.forms[x]) + '\n'
                 techOutput = ''
                 for x in list(self.techniques.keys()):
                     if x != None:
-                        techOutput += x + ': ' + str(self.techniques[x] + '\n')
+                        techOutput += x + ': ' + str(self.techniques[x]) + '\n'
                 embed.add_field(name='\u200b',value='\u200b',inline=False)
                 embed.add_field(name='Froms',value=formsOutput,inline=True)
                 embed.add_field(name='Techniques',value=techOutput,inline=True)
