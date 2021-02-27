@@ -472,7 +472,6 @@ class Character():
             cAbi = numpy.random.choice(abiList, p=weight)
             copy = cAbi
             try:
-                print('c1')
                 modular = re.search('\(([^)]+)\)',cAbi)[0]
                 if (self.referencePath/'abilitySpecifications'/cAbi).exists():
                     with open(self.referencePath/'abilitySpecifications'/cAbi,'r') as refFile:
