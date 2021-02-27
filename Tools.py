@@ -236,6 +236,7 @@ class Tools(commands.Cog):
             if fileList[index].stem == 'abilityLib':
 
                 tempAbi = Ability('dummyText')
+                tempAbi.abilitiesLib = {}
                 await msg.attachments[0].save(tempAbi.referencePath/'abilities.txt')
 
                 with open(tempAbi.referencePath / 'abilities.txt', 'r', encoding='utf-8') as file:
@@ -257,6 +258,7 @@ class Tools(commands.Cog):
 
             elif fileList[index].stem == 'virtueLib' or fileList[index].stem == 'flawLib':
                 tempVF = VirtueFlaw()
+                tempVF.virtuesLib = {}
                 if fileList[index].stem == 'virtueLib':
                     tempVF.referenceFile = tempVF.referencePath / 'virtueLib.txt'
                 elif fileList[index].stem == 'flawLib':

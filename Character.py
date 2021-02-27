@@ -180,15 +180,30 @@ class Ability():
             pass
         self.loadReference()
 
+        newName = 'BAD ABILITY'
         similarity = 100
         for x in self.abilitiesLib:
             # print('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
+            found = re.findall(r'(\([^)]+\))', x)
+            if len(found) > 0:
+                if (Path.cwd()/'referenceFiles'/'abilitySpecifications'/x).exists():
+                    with open(Path.cwd()/'referenceFiles'/'abilitySpecifications'/x,'r') as refFile:
+                        ref = json.load(refFile)
+                        for spec in ref:
+
+                            y = x.replace(found[0],spec)
+                            if Levenshtein.distance(y, name.upper()) < similarity:
+                                self.name = y
+                                similarity = Levenshtein.distance(y, name.upper())
+                                self.base=x
+
             if Levenshtein.distance(x, name.upper()) < similarity:
                 self.name = x
                 similarity = Levenshtein.distance(x, name.upper())
+                self.base=x
             else:
                 pass
-        self.base = self.name
+
         try:
             modularPart = re.search(r'\((.*?)\)',self.name).group(1)
             if specification != 'none':
@@ -434,31 +449,48 @@ class Character():
         keyWord = keyWord.strip()
 
         a = Ability('placeholder')
-        wList = self.weightedSim(keyWord,a.abilitiesLib.keys())
+        abis = list(a.abilitiesLib.keys()).copy()
+        fullAbiLib = []
+        for x in abis:
+            found = re.findall(r'(\([^)]+\))', x)
+            if len(found) > 0:
+                if (Path.cwd()/'referenceFiles'/'abilitySpecifications'/x).exists():
+                    with open(Path.cwd()/'referenceFiles'/'abilitySpecifications'/x,'r') as refFile:
+                        ref = json.load(refFile)
+                        for spec in ref:
+                            fullAbiLib.append(x.replace(found[0],spec))
+            else:
+                fullAbiLib.append(x)
+
+        wList = self.weightedSim(keyWord,fullAbiLib)
         abiList = wList[0]
         weight = wList[1]
 
         xp = age*15
         while xp > 0:
+
             cAbi = numpy.random.choice(abiList, p=weight)
+            copy = cAbi
             try:
+                print('c1')
                 modular = re.search('\(([^)]+)\)',cAbi)[0]
                 if (self.referencePath/'abilitySpecifications'/cAbi).exists():
                     with open(self.referencePath/'abilitySpecifications'/cAbi,'r') as refFile:
                         ref = json.load(refFile)
                         wList = self.weightedSim(keyWord,ref)
+                        print('c4')
                         try:
-                            copy = cAbi
                             cAbi = self.addAbilityCheck(cAbi,specification=numpy.random.choice(wList[0],p=wList[1]))
+                            print('c5')
                             if cAbi == 'False':
-                                        #print('Ability not allowed ' + copy)
-                                        num = abiList.index(copy)
-                                        abiList.pop(num)
-                                        weight.pop(num)
-                                        total = sum(weight)
-                                        c2 = weight.copy()
-                                        weight = [x / total for x in c2]
-                                        continue
+                                #print('Ability not allowed ' + copy)
+                                num = abiList.index(copy)
+                                abiList.pop(num)
+                                weight.pop(num)
+                                total = sum(weight)
+                                c2 = weight.copy()
+                                weight = [x / total for x in c2]
+                                continue
                         except alreadyExist:
                             cAbi = self.closestAbi(cAbi)
             except TypeError:
@@ -478,6 +510,8 @@ class Character():
                 except alreadyExist:
                     cAbi = self.closestAbi(cAbi)
             except Exception as e:
+                print('CURRENT TEST')
+                print(cAbi)
                 print('Unexpected exception!')
                 print(e)
             #print(str(self.abilities[cAbi].score) + ' score, compared with ' + str(max(math.ceil((self.age-30)/5+5),5)) + ' max.')
@@ -513,13 +547,26 @@ class Character():
         self.abilities[langName].setScore(5)
 
 
+
         abiRefList = ['(AREA) LORE','Athletics','Awareness','Brawl','Charm','Folk Ken','Guile','(LIVING LANGUAGE)','Stealth','Survival','Swim']
-        wList = self.weightedSim(keyWord,abiRefList,mag=5.0)
+        fullAbiLib = []
+        for x in abiRefList:
+            found = re.findall(r'(\([^)]+\))', x)
+            if len(found) > 0:
+                if (Path.cwd()/'referenceFiles'/'abilitySpecifications'/x).exists():
+                    with open(Path.cwd()/'referenceFiles'/'abilitySpecifications'/x,'r') as refFile:
+                        ref = json.load(refFile)
+                        for spec in ref:
+                            fullAbiLib.append(x.replace(found[0],spec))
+            else:
+                fullAbiLib.append(x)
+        wList = self.weightedSim(keyWord,fullAbiLib,mag=5.0)
         abiList = wList[0]
         weight = wList[1]
         xp = 45
         while xp > 0:
             cAbi = numpy.random.choice(abiList, p=weight)
+            copy = cAbi
             try:
                 modular = re.search('\(([^)]+)\)',cAbi)[0]
                 if (self.referencePath/'abilitySpecifications'/cAbi).exists():
@@ -527,7 +574,7 @@ class Character():
                         ref = json.load(refFile)
                         wList = self.weightedSim(keyWord,ref)
                         try:
-                            copy = cAbi
+
                             cAbi = self.addAbilityCheck(cAbi,specification=numpy.random.choice(wList[0],p=wList[1]))
                             if cAbi == 'False':
                                 num = abiList.index(copy)
@@ -1069,15 +1116,17 @@ class Character():
                     arts = True
             if arts:
                 formsOutput = ''
+                formTranslator = {'an':'animal','aq':'aqaum','au':'auram','co':'corpus','he':'herbam','ig':'ignam','im':'imaginem','me':'mentem','te':'terram','vi':'vim'}
                 for x in list(self.forms.keys()):
                     if x != None:
-                        formsOutput += x + ': ' + str(self.forms[x]) + '\n'
+                        formsOutput += x + ': ' + str(formTranslator[self.forms[x]]).capitalize() + '\n'
                 techOutput = ''
+                techTranslator = {'cr':'creo','in':'intellego','mu':'muto','pe':'perdo','re':'rego'}
                 for x in list(self.techniques.keys()):
                     if x != None:
-                        techOutput += x + ': ' + str(self.techniques[x]) + '\n'
+                        techOutput += x + ': ' + str(techTranslator[self.techniques[x]]).capitalize() + '\n'
                 embed.add_field(name='\u200b',value='\u200b',inline=False)
-                embed.add_field(name='Froms',value=formsOutput,inline=True)
+                embed.add_field(name='Forms',value=formsOutput,inline=True)
                 embed.add_field(name='Techniques',value=techOutput,inline=True)
 
         except Exception as e:
