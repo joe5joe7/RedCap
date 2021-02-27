@@ -61,17 +61,31 @@ class DiceRolls(commands.Cog):
         tempChar = Character(self.nlp,await self.basePath(ctx),'temp')
         try:
             tempChar.load(name)
-            return True
+            if tempChar.name == 'temp':
+                return False
+            else:
+                return True
         except:
             return False
 
-    @commands.command(name='associate', help='Associates you with a character, dice rolls will assume that char')
-    async def associate(self, ctx, charName):
-        if await self.checkExist(ctx, charName):
+    @commands.command(name='associate', help='Associates you with a character, dice rolls will assume that char',aliases=['ass'])
+    async def associate(self, ctx, charName='default'):
+        if charName == 'default':
+            await ctx.send('Please enter command with a character you wish to associate with.')
+        elif await self.checkExist(ctx, charName):
             self.associations[ctx.message.author.id] = charName
             await ctx.send('Successfully associated ' + ctx.message.author.name + ' with ' + charName.capitalize())
         else:
             await ctx.send('Chosen character does not exist :(')
+
+    @commands.command(name='unAssociate', help='Associates you with a character, dice rolls will assume that char',aliases=['uass','unassociate','unass'])
+    async def unAssociate(self, ctx):
+        if ctx.message.author.id in self.associations.keys():
+            charName = self.associations[ctx.message.author.id]
+            del self.associations[ctx.message.author.id]
+            await ctx.send('Successfully unassociated ' + ctx.message.author.name + ' with ' + charName.capitalize())
+        else:
+            await ctx.send('You are currently not associated with any character.')
 
     @commands.command(name='simple', help='Rolls a simple die. ex: !simple greg int charm', aliases=['s'])
     async def roll_simple(self, ctx, *args):
@@ -87,7 +101,7 @@ class DiceRolls(commands.Cog):
                 print(e)
         try:
             if ctx.message.author.id in self.associations.keys() and roller.name == 'default':
-                print('loading ' + self.associations[ctx.message.author.id])
+                #print('loading ' + self.associations[ctx.message.author.id])
                 roller = (await self.loadChar(ctx,self.associations[ctx.message.author.id]))
         except Exception as e:
             print('Exception loading associated char')
@@ -107,6 +121,7 @@ class DiceRolls(commands.Cog):
         print(roller.name)
         rando = random.randint(1, 10)
         #   print('random number generated, ' + str(rando))
+
         if roller.name != 'default':
             try:
                 char = list(set(args) & set(roller.charList))[0]
@@ -125,7 +140,7 @@ class DiceRolls(commands.Cog):
                 similarity = 100
                 if abName == '':
                     raise Exception('no ability entered')
-                for x in roller.referenceAbility.abilityList():
+                for x in list(roller.abilities.keys()):
                     # rint('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
                     if Levenshtein.distance(x, abName.upper()) < similarity:
                         ability = x
@@ -140,6 +155,7 @@ class DiceRolls(commands.Cog):
                 print('no ability entered')
                 ability = '*no ability entered*'
                 abiadd = 0
+
 
             await ctx.send(DiscordStyle.style(roller.name + ' rolls a simple die, adds their ' + char + ' of ' + str(
                 charadd) + ' and their ' + ability.capitalize() + ' of ' + str(abiadd)))
@@ -168,7 +184,7 @@ class DiceRolls(commands.Cog):
         #print('TS: Character initiated: ' + str(datetime.utcnow()))
         try:
             if ctx.message.author.id in self.associations.keys() and roller.name == 'default':
-                print('loading ' + self.associations[ctx.message.author.id])
+                #print('loading ' + self.associations[ctx.message.author.id])
                 roller = (await self.loadChar(ctx,self.associations[ctx.message.author.id]))
         except Exception as e:
             print('Exception loading associated char')
@@ -206,7 +222,7 @@ class DiceRolls(commands.Cog):
                 similarity = 100
                 if abName == '':
                     raise Exception('no ability entered')
-                for x in roller.referenceAbility.abilityList():
+                for x in list(roller.abilities.keys()):
                     # rint('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
                     if Levenshtein.distance(x, abName.upper()) < similarity:
                         ability = x
@@ -222,7 +238,6 @@ class DiceRolls(commands.Cog):
                 ability = '*no ability entered*'
                 abiadd = 0
         #print('TS: Characteristic/Ability initiated: ' + str(datetime.utcnow()))
-
         if (result != 0 and result != 1):
             if roller.name != 'default':
                 await ctx.send(DiscordStyle.style((roller.name + ' rolled a {' + str(
@@ -273,24 +288,32 @@ class DiceRolls(commands.Cog):
                     await ctx.send(Exclamations.surprise())
         elif result == 0:
             if roller.name != 'default':
-                await ctx.send(DiscordStyle.style(
-                    (roller.name + ' rolled a {0}, you might botch! Use the !botch command to check!')))
+                await ctx.send(DiscordStyle.style((roller.name + ' rolled a {0}, you might botch! Use the !botch command to check!'),'red'))
             else:
-                await ctx.send(
-                    DiscordStyle.style(('You rolled a {0}, you might botch! Use the !botch command to check!'), 'red'))
+                await ctx.send(DiscordStyle.style(('You rolled a {0}, you might botch! Use the !botch command to check!'), 'red'))
         #print('TS: Stress die completed: ' + str(datetime.utcnow()))
 
     @commands.command(name='botch', help='Rolls your botch dice. Use the format !botch [number]', aliases=['b'])
     async def botch(self, ctx, num: int = 1):
-        await ctx.send(DiscordStyle.style('Finger\'s crossed for you!', style))
         x = 0
         dice = []
+        roller = 'You'
+        rollerPos = 'Your'
+
+        if ctx.message.author.id in self.associations.keys():
+            roller = self.associations[ctx.message.author.id].capitalize()
+            rollerPos = self.associations[ctx.message.author.id].capitalize() + '\'s'
+            await ctx.send(DiscordStyle.style('Finger\'s crossed for you, ' + roller + '!', style))
+        else:
+            await ctx.send(DiscordStyle.style('Finger\'s crossed for you!', style))
+
+
 
         while x < num:
             dice.append(random.randint(0, 9))
             x = x + 1
 
-        results = 'Your results are'
+        results = rollerPos + ' results are'
 
         for x in range(len(dice)):
             results = results + ' {' + str(dice[x]) + '} '
@@ -299,13 +322,13 @@ class DiceRolls(commands.Cog):
         botch = dice.count(0)
 
         if botch == 0:
-            await ctx.send(DiscordStyle.style('You didn\'t botch, congrats!', style))
+            await ctx.send(DiscordStyle.style(roller + ' didn\'t botch, congrats!', style))
         elif botch == 1:
-            await ctx.send(DiscordStyle.style('You botched 1 time. That\'s ' + Exclamations.unlucky() + '.', style))
+            await ctx.send(DiscordStyle.style(roller + ' botched 1 time. That\'s ' + Exclamations.unlucky() + '.', style))
         elif botch > 1:
             await ctx.send(
-                DiscordStyle.style('You botched ' + str(botch) + ' times. That\'s ' + Exclamations.unlucky() + '.',
-                                   style))
+                DiscordStyle.style(roller + ' botched ' + str(botch) + ' times. That\'s ' + Exclamations.unlucky() + '.',
+                                   'red'))
 
     @commands.command(name='stressC', help='Rolls a stress die with an expected result')
     @commands.has_role('admin')

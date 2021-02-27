@@ -51,6 +51,8 @@ class CharacterSheet(commands.Cog):
             print('Virtue library does not exist in expected place ' + str(Path.cwd() / 'referenceFiles'/'libraries'/'virtueLib'))
         if not (Path.cwd() / 'referenceFiles'/'libraries'/'flawLib').exists():
             print('Virtue library does not exist in expected place ' + str(Path.cwd() / 'referenceFiles'/'libraries'/'flawLib'))
+        if not (Path.cwd()/'referenceFile'/'defaultIcon.png').exists():
+            print('Default icon does not exist in expected place ' + str(Path.cwd()/'referenceFile'/'defaultIcon.png'))
 
     
     async def basePath(self,ctx,msg = False):
@@ -84,6 +86,13 @@ class CharacterSheet(commands.Cog):
             grog.genStartingAbilities(*args)
             grog.age = random.randint(18,35)
             grog.genGrogAbilities(grog.age,*args)
+
+            keyWord = ''
+            for word in args:
+                keyWord += word + ' '
+            keyWord = keyWord.strip()
+
+            grog.description = keyWord
             grog.save('tg')
         except Exception as e:
             print(e)
@@ -101,7 +110,8 @@ class CharacterSheet(commands.Cog):
         # grog.genStats(*focus)
         # grog.genAbilities(200)
         # grog.genVirtuesFlaws(3)
-        await ctx.send(DiscordStyle.style(grog.display(),self.style))
+        output = grog.display()
+        await ctx.send(file=output[1],embed = output[0])
         # grog.save('tg')
 
     @commands.command(name='saveGrog',help='Saves a temp grog')
@@ -122,7 +132,8 @@ class CharacterSheet(commands.Cog):
         temp = Character(self.nlp,await self.basePath(ctx),'temp')
         temp.load(name)
        # print(temp.display())
-        await ctx.send(DiscordStyle.style(temp.display(),self.style))
+        output = temp.display()
+        await ctx.send(file=output[1],embed = output[0])
 
     @commands.command(name='charList',help='Gives a list of available grogs')
     async def charList(self,ctx):
@@ -206,7 +217,8 @@ class CharacterSheet(commands.Cog):
             await member.send(str(msg) + ' xp added to ' + abi +'. Your score is now ' + str(customCharacter.abilities[abi].score))
         customCharacter.save('g')
         await member.send('Character saved!')
-        await member.send(customCharacter.display())
+        output = customCharacter.display()
+        await ctx.send(file=output[1],embed = output[0])
 
     async def checkExist(self,ctx,name):
         tempChar = Character(self.nlp,await self.basePath(ctx),'temp')
@@ -261,7 +273,8 @@ class CharacterSheet(commands.Cog):
                     elif msg.content.lower() =='c' or msg.content.lower() == 'check':
                         tempChar = Character(self.nlp,await self.basePath(ctx),contents[0])
                         tempChar.load(contents[0])
-                        await member.send(tempChar.display())
+                        output = tempChar.display()
+                        await ctx.send(file=output[1],embed = output[0])
                         await  member.send('\n \n Is this the character you would like to update? Please enter y / n')
                     else:
                         await member.send('Please enter yes, no, or check')
@@ -395,7 +408,8 @@ class CharacterSheet(commands.Cog):
             except Exception as e:
                 print(e)
             await member.send('Character successfully saved!')
-            await member.send(newChar.display())
+            output = newChar.display()
+            await ctx.send(file=output[1],embed = output[0])
             #print(newChar.display())
         except Exception as e:
             print(e)

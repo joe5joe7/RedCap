@@ -9,6 +9,7 @@ import numpy
 import os
 from datetime import datetime
 import json
+import discord
 
 #Test Test
 
@@ -270,6 +271,7 @@ class Character():
         self.confidence = 0
         self.covenant = 'undefined'
         self.age = 0
+        self.description = ''
         for key in self.filepaths:
             try:
                 self.filepaths[key].mkdir(parents=True)
@@ -332,6 +334,9 @@ class Character():
         self.abilities = {}
         self.virtues = {}
         self.flaws = {}
+        self.type='unTyped'
+        self.referencePath = Path.cwd() / 'referenceFiles'
+        self.avatar = self.referencePath/'defaultIcon.png'
 
     def checkPoints(self):
         pointTotal = 0
@@ -575,6 +580,7 @@ class Character():
             for word in args:
                 keyWord += word + ' '
             keyWord = keyWord.strip()
+
             v = Virtue('placeholder')
             c1 = list(v.virtuesLib.keys())
             c2 = list(v.virtuesLib.keys())
@@ -825,6 +831,8 @@ class Character():
         # type is the type of character which determines the save folder
         #print('saving ' + self.name)
         oldType = type
+        typeTranslator = {'g':'grog','tg':'tempGrog','c':'companion','tc':'tempCompanion','m':'magus','tm':'tempMagus'}
+        self.type = typeTranslator[type]
         try:
             # Tries to access a saved character with the same name
             existingPath = list(self.basePath.glob('**/' + self.name))[0]
@@ -885,7 +893,10 @@ class Character():
                 'techniquesXP' : self.techniquesXP,
                 'forms' : self.forms,
                 'formsXP' : self.formsXP,
-            }
+                'description': self.description,
+                'type':self.type
+
+                }
 
             if (self.filepaths[oldType] / self.name).exists():
                 (self.filepaths[oldType] / self.name).unlink()
@@ -944,7 +955,11 @@ class Character():
         # print(name)
         # print((list(self.basePath.glob('**/' + name))[0]))
         try:
-            infile = open(list(self.basePath.glob('**/' + name))[0], 'r')
+          tempName = list(self.basePath.glob('**/' + name))[0]
+        except IndexError:
+            return
+        try:
+            infile = open(tempName, 'r')
             #print('TS:          first JSON load started: ' + str(datetime.utcnow()))
             data = json.load(infile)
             #print('TS:          first JSON load finished: ' + str(datetime.utcnow()))
@@ -963,8 +978,11 @@ class Character():
                 self.techniquesXP = data['techniquesXP']
                 self.forms = data['forms']
                 self.formsXP = data['formsXP']
+                self.description = data['description']
+                self.type = data['type']
             except Exception as e:
                 print(e)
+                print('some data not found, character file likely out of date for ' + self.name)
             for x in list(infoF.glob('*')):
                 try:
                     file = open(x, 'rb')
@@ -1003,30 +1021,65 @@ class Character():
         return True
 
     def display(self):
-        output = 'Character name: ' + str(self.name) + '\n'
-        output += 'Age: ' + str(self.age) + '\n'
-        for char in self.characteristics:
-            output += char.capitalize() + ': ' + str(self.characteristics[char]) + ' '
-        output += '\n \n*Abilities:* '
-        for x in self.abilities:
-            if self.abilities[x].specialty != '':
-                output += '\n' + x.capitalize() + '(' + self.abilities[x].specialty.capitalize() + '): {' + str(
-                    self.abilities[x].score) + '} '
+        try:
+            if self.type == 'unTyped':
+                typeColor = discord.Colour.dark_red()
+            elif self.type in ['tg','tm','tc']:
+                typeColor = discord.Colour.dark_grey()
+            elif self.type =='g':
+                typeColor = discord.Colour.green()
+            elif self.type =='c':
+                typeColor = discord.Colour.gold()
+            elif self.type =='m':
+                typeColor = discord.Colour.purple()
             else:
-                output += '\n' + x.capitalize() + ': {' + str(self.abilities[x].score) + '} '
-        output += '\n \n*Virtues:* '
-        for x in self.virtues:
-            output += '\n' + x.capitalize()
-        output += '\n \n*Flaws:* '
-        for x in self.flaws:
-            output += '\n' + x.capitalize()
-        output += '\n \n*Arts:*'
-        for x in self.techniques:
-            output += x.capitalize() + ': ' + str(self.techniques[x]) + ' '
-            if self.techniquesXP[x] != None:
-                output += '(' + str(self.techniquesXP[x]) + ') '
-        for x in self.forms:
-            output += x.capitalize() + ': ' + str(self.forms[x]) + ' '
-            if self.formsXP[x] != None:
-                output += '(' + str(self.formsXP[x]) + ') '
-        return output
+                typeColor = discord.Colour.red()
+            desc = self.description
+            desc += '\n' + 'Age: ' + str(self.age) + ' years old.'
+            desc += '\n' + 'Covenant: ' + self.covenant
+            desc += '\n' + 'Warping Score: [' + str(self.warpingScore) + ']\u200B \u200B Confidence: [' + str(self.confidence) + ']'
+            embed = discord.Embed(title=self.type,description=desc,color=typeColor)
+            file = discord.File(self.avatar,filename='avatar.png')
+            embed.set_author(name=self.name,icon_url='attachment://avatar.png')
+            embed.set_thumbnail(url='attachment://avatar.png')
+            charOutput = 'Int: [' + str(self.characteristics['int']) + '] \u200B \u200BPer: [' + str(self.characteristics['per']) + '] \u200B \u200BStr: [' + str(self.characteristics['str']) + '] \u200B \u200BSta: [' + str(self.characteristics['sta']) + '] \nPre: [' + str(self.characteristics['pre']) + '] \u200B \u200BCom: [' + str(self.characteristics['com']) + '] \u200B \u200BDex: [' + str(self.characteristics['dex']) + '] \u200B \u200BQik: [' + str(self.characteristics['qik']) + ']'
+            embed.add_field(name='Characteristics',value=charOutput,inline=False)
+            virtOutput = ''
+            for x in list(self.virtues.keys()):
+                virtOutput += x.capitalize() + '\n'
+            flawOutput = ''
+            for x in list(self.flaws.keys()):
+                flawOutput += x.capitalize() + '\n'
+            embed.add_field(name='Virtues',value=virtOutput,inline=True)
+            embed.add_field(name='Flaws',value=flawOutput,inline=True)
+            abiOutput = ''
+            scoreOutput = ''
+            for x in list(self.abilities.keys()):
+                abiOutput += x.capitalize() + '\n'
+                scoreOutput += str(self.abilities[x].score) + '\n'
+            embed.add_field(name='\u200b',value='\u200b',inline=False)
+            embed.add_field(name='Abilities',value=abiOutput,inline=True)
+            embed.add_field(name='Score',value=scoreOutput,inline=True)
+            arts = False
+            for x in list(self.forms.values()):
+                if x != None:
+                    arts = True
+            for x in list(self.techniques.values()):
+                if x != None:
+                    arts = True
+            if arts:
+                formsOutput = ''
+                for x in list(self.forms.keys()):
+                    if x != None:
+                        formsOutput += x + ': ' + str(self.forms[x] + '\n')
+                techOutput = ''
+                for x in list(self.techniques.keys()):
+                    if x != None:
+                        techOutput += x + ': ' + str(self.techniques[x] + '\n')
+                embed.add_field(name='\u200b',value='\u200b',inline=False)
+                embed.add_field(name='Froms',value=formsOutput,inline=True)
+                embed.add_field(name='Techniques',value=techOutput,inline=True)
+
+        except Exception as e:
+            print(e)
+        return (embed,file)
