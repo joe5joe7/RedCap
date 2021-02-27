@@ -123,9 +123,11 @@ class CharacterSheet(commands.Cog):
 
     @commands.command(name='purge',help='Purges temp grogs')
     async def purge(self,ctx):
-        shutil.rmtree(await self.basePath(ctx) / 'characters' / 'tempGrogs')
-        await ctx.send(DiscordStyle.style('Temp grogs purged!',self.style))
-
+        try:
+            shutil.rmtree(await self.basePath(ctx) / 'characters' / 'tempGrogs')
+            await ctx.send(DiscordStyle.style('Temp grogs purged!',self.style))
+        except Exception as e:
+            print(e)
     @commands.command(name='loadChar',help='loads a previously generated character.')
     async def loadChar(self,ctx,name: str):
        # print('attempting to load ' + name)
