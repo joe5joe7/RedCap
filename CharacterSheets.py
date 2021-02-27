@@ -51,7 +51,7 @@ class CharacterSheet(commands.Cog):
             print('Virtue library does not exist in expected place ' + str(Path.cwd() / 'referenceFiles'/'libraries'/'virtueLib'))
         if not (Path.cwd() / 'referenceFiles'/'libraries'/'flawLib').exists():
             print('Virtue library does not exist in expected place ' + str(Path.cwd() / 'referenceFiles'/'libraries'/'flawLib'))
-        if not (Path.cwd()/'referenceFile'/'defaultIcon.png').exists():
+        if not (Path.cwd()/'referenceFiles'/'defaultIcon.png').exists():
             print('Default icon does not exist in expected place ' + str(Path.cwd()/'referenceFile'/'defaultIcon.png'))
 
     
