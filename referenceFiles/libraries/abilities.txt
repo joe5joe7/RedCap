@@ -131,7 +131,7 @@ especially members of the opposite sex.
 Specialties: courtly love, first impressions,
 being witty. (General)
 
-SURGERY*
+CHIRURGY (KIE-RUHR-GEE)*
 This is Middle Ages-style surgery, used to
 help others recover from physical damage. It
 encompasses tending and binding wounds of all
@@ -558,7 +558,7 @@ Magic Resistance. See page 82 for detailed
 Penetration rules. Specialties: any one Art.
 (Arcane)
 
-PHILOSOPHY*
+PHILOSOPHIAE*
 There are three philosophies — natural
 philosophy, moral philosophy, and metaphysics. Aristotle is the authority for all of
 them, in different books. Most scholars study
@@ -590,7 +590,7 @@ nature of the danger, with more detail if you
 roll more highly. Specialties: threats to a particular person or group of people, particular
 kinds of threats. (Supernatural)
 
-PROFESSION (TYPE)
+PROFESSION
 The ability to do a job which does not
 involve making something. Examples include
 jongleur, reeve, sailor, steward, teamster, and

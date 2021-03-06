@@ -13,7 +13,7 @@ import discord
 
 #Test Test
 
-# Todo
+# Todo create virtue implementation
 # give virtues character creation ability permissions:
 # ARCANE LORE gives perm for arcane abilities and additional 50 experience points, which must be spent on Arcane Abilities.
 # EDUCATED additional 50 experience points, which must be spent on Latin and Artes Liberales.
@@ -55,12 +55,21 @@ class VirtueFlaw():
         self.virtuesLib = {}
         self.referencePath = Path.cwd() / 'referenceFiles' / 'libraries'
         self.speciality = speciality
-        self.flags = []
         try:
             self.referencePath.mkdir(parents=True)
         except:
             pass
         similarity = 100
+        self.excludesVF=[]
+        self.permitsAbi=[]
+        self.excludesAbi=[]
+        self.grantRep=[]
+        self.grantAbi=[]
+        #each entry in modifiers is a tuple containing 3 values (thing it affects,value,hard/soft)
+        self.modifiers=[]
+        #each entry in botchMod is a tuple containing 2 values (thing it affects, number of botch dice)
+        self.botchMod=[]
+        self.specifications = []
 
     def addSpecialty(self, speciality):
         self.speciality = speciality
@@ -101,16 +110,16 @@ class VirtueFlaw():
         else:
             return (self.name + '\n' + self.value + ', ' + self.type + '\n Description: ' + self.description)
 
-    def validity(self, name):
-        similarity = 100
-        for x in self.virtuesLib:
-            # print('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
-            if Levenshtein.distance(x, name.upper()) < similarity:
-                self.name = x
-                similarity = Levenshtein.distance(x, name.upper())
-            else:
-                pass
-        return similarity
+    # def validity(self, name):
+    #     similarity = 100
+    #     for x in self.virtuesLib:
+    #         # print('difference between ' + x + ' and ' + name.upper() + ' is ' + str(Levenshtein.distance(x,name.upper())))
+    #         if Levenshtein.distance(x, name.upper()) < similarity:
+    #             self.name = x
+    #             similarity = Levenshtein.distance(x, name.upper())
+    #         else:
+    #             pass
+    #     return similarity
 
 
 class Virtue(VirtueFlaw):
@@ -127,9 +136,10 @@ class Virtue(VirtueFlaw):
                 similarity = Levenshtein.distance(x, name.upper())
             else:
                 pass
-        self.description = self.virtuesLib[self.name]['description']
-        self.value = self.virtuesLib[self.name]['value']
-        self.type = self.virtuesLib[self.name]['type']
+
+        for x in list(self.virtuesLib[self.name].keys()):
+            setattr(self,x,self.virtuesLib[self.name][x])
+
         if self.speciality == 'default' and self.name == 'CUSTOS':
             self.speciality = random.choice(['(Martial)','(Academic)','(Arcane)'])
         if self.speciality == 'default' and self.name == 'WISE ONE':
@@ -153,9 +163,8 @@ class Flaw(VirtueFlaw):
                 similarity = Levenshtein.distance(x, name.upper())
             else:
                 pass
-        self.description = self.virtuesLib[self.name]['description']
-        self.value = self.virtuesLib[self.name]['value']
-        self.type = self.virtuesLib[self.name]['type']
+        for x in list(self.virtuesLib[self.name].keys()):
+            setattr(self,x,self.virtuesLib[self.name][x])
 
     def isFlaw(self):
         return True
@@ -219,6 +228,8 @@ class Ability():
         self.description = self.abilitiesLib[self.base]['description']
         self.needTraining = self.abilitiesLib[self.base]['needTraining']
         self.type = self.abilitiesLib[self.base]['type']
+        self.specification = ''
+
 
     def addXp(self, xp):
         self.xp += xp
@@ -287,6 +298,15 @@ class Character():
         self.covenant = 'undefined'
         self.age = 0
         self.description = ''
+        self.excludedVF=[]
+        self.permitedAbi = []
+        self.excludedAbi = []
+        self.modifiers = []
+        self.botchMod = []
+        self.reputations = []
+
+
+
         for key in self.filepaths:
             try:
                 self.filepaths[key].mkdir(parents=True)
@@ -352,6 +372,56 @@ class Character():
         self.type='unTyped'
         self.referencePath = Path.cwd() / 'referenceFiles'
         self.avatar = self.referencePath/'defaultIcon.png'
+
+    def initVF(self):
+        # self.excludesVF=[]
+        # self.permitsAbi=[]
+        # self.excludesAbi=[]
+        # self.grantRep=[]
+        # self.grantAbi=[]
+        # #each entry in modifiers is a tuple containing 3 values (thing it affects,value,hard/soft)
+        # self.modifiers=[]
+        # #each entry in botchMod is a tuple containing 2 values (thing it affects, number of botch dice)
+        # self.botchMod=[]
+
+        for virt in self.virtues:
+            if bool(virt.excludesVF):
+                for x in virt.excludesVF:
+                    self.excludedVF.append(x)
+            if bool(virt.permitsAbi):
+                for x in virt.permitsAbi:
+                    self.permitedAbi.append(x)
+            if bool(virt.modifiers):
+                for x in virt.modifiers:
+                    self.modifiers.append(x)
+            if bool(virt.botchMod):
+                for x in virt.botchMod:
+                    self.botchMod.append(x)
+            if bool(virt.grantRep):
+                for x in virt.grantRep:
+                    self.reputations.append(x)
+            if bool(virt.grantAbi):
+                abiName = self.addAbility(virt.grantAbi[0])
+                self.abilities[abiName].addXP(virt.grantAbi[1])
+        for virt in self.flaws:
+            if bool(virt.excludesVF):
+                for x in virt.excludesVF:
+                    self.excludedVF.append(x)
+            if bool(virt.permitsAbi):
+                for x in virt.permitsAbi:
+                    self.permitedAbi.append(x)
+            if bool(virt.modifiers):
+                for x in virt.modifiers:
+                    self.modifiers.append(x)
+            if bool(virt.botchMod):
+                for x in virt.botchMod:
+                    self.botchMod.append(x)
+            if bool(virt.grantRep):
+                for x in virt.grantRep:
+                    self.reputations.append(x)
+            if bool(virt.grantAbi):
+                abiName = self.addAbility(virt.grantAbi[0])
+                self.abilities[abiName].addXP(virt.grantAbi[1])
 
     def checkPoints(self):
         pointTotal = 0
@@ -471,46 +541,41 @@ class Character():
 
             cAbi = numpy.random.choice(abiList, p=weight)
             copy = cAbi
+            # try:
+            #     modular = re.search('\(([^)]+)\)',cAbi)[0]
+            #     if (self.referencePath/'abilitySpecifications'/cAbi).exists():
+            #         with open(self.referencePath/'abilitySpecifications'/cAbi,'r') as refFile:
+            #             ref = json.load(refFile)
+            #             wList = self.weightedSim(keyWord,ref)
+            #             try:
+            #                 cAbi = self.addAbilityCheck(cAbi,specification=numpy.random.choice(wList[0],p=wList[1]))
+            #                 if cAbi == 'False':
+            #                     #print('Ability not allowed ' + copy)
+            #                     num = abiList.index(copy)
+            #                     abiList.pop(num)
+            #                     weight.pop(num)
+            #                     total = sum(weight)
+            #                     c2 = weight.copy()
+            #                     weight = [x / total for x in c2]
+            #                     continue
+            #             except alreadyExist:
+            #                 cAbi = self.closestAbi(cAbi)
             try:
-                modular = re.search('\(([^)]+)\)',cAbi)[0]
-                if (self.referencePath/'abilitySpecifications'/cAbi).exists():
-                    with open(self.referencePath/'abilitySpecifications'/cAbi,'r') as refFile:
-                        ref = json.load(refFile)
-                        wList = self.weightedSim(keyWord,ref)
-                        print('c4')
-                        try:
-                            cAbi = self.addAbilityCheck(cAbi,specification=numpy.random.choice(wList[0],p=wList[1]))
-                            print('c5')
-                            if cAbi == 'False':
-                                #print('Ability not allowed ' + copy)
-                                num = abiList.index(copy)
-                                abiList.pop(num)
-                                weight.pop(num)
-                                total = sum(weight)
-                                c2 = weight.copy()
-                                weight = [x / total for x in c2]
-                                continue
-                        except alreadyExist:
-                            cAbi = self.closestAbi(cAbi)
-            except TypeError:
-                try:
-                    copy = cAbi
-                    cAbi = self.addAbilityCheck(cAbi)
-                    if cAbi == 'False':
-                                #print('Ability not allowed ' + copy)
-                                num = abiList.index(copy)
-                                abiList.pop(num)
-                                weight.pop(num)
-                                total = sum(weight)
-                                c2 = weight.copy()
-                                weight = [x / total for x in c2]
-                                continue
+                copy = cAbi
+                cAbi = self.addAbilityCheck(cAbi)
+                if cAbi == 'False':
+                            #print('Ability not allowed ' + copy)
+                    num = abiList.index(copy)
+                    abiList.pop(num)
+                    weight.pop(num)
+                    total = sum(weight)
+                    c2 = weight.copy()
+                    weight = [x / total for x in c2]
+                    continue
 
-                except alreadyExist:
-                    cAbi = self.closestAbi(cAbi)
+            except alreadyExist:
+                cAbi = self.closestAbi(cAbi)
             except Exception as e:
-                print('CURRENT TEST')
-                print(cAbi)
                 print('Unexpected exception!')
                 print(e)
             #print(str(self.abilities[cAbi].score) + ' score, compared with ' + str(max(math.ceil((self.age-30)/5+5),5)) + ' max.')
@@ -775,30 +840,40 @@ class Character():
 
     def addAbility(self, name, speciality='default',specification='none'):
         tempAbi = Ability(name, speciality,specification)
-        try:
-            self.abilities[tempAbi.name]
+        if tempAbi.name in list(self.abilities.keys()):
             raise alreadyExist('ability already exists')
-        except alreadyExist:
-            raise alreadyExist('ability already exists')
-        except:
-            None
+
         self.abilities[tempAbi.name] = tempAbi
         return (tempAbi.name)
 
     def addAbilityCheck(self,name, speciality='default',specification='none'):
         tempAbi = Ability(name, speciality,specification)
-        try:
-            self.abilities[tempAbi.name]
-            raise alreadyExist('ability already exists')
-        except alreadyExist:
-            raise alreadyExist('ability already exists')
-        except:
-            None
 
+        if tempAbi.name in list(self.abilities.keys()):
+            raise alreadyExist('ability already exists')
+
+        # except:
+        #     pass
+        #
+        # if tempAbi.name in self.excludedAbi:
+        #     return False
+        #
 
         if tempAbi.type == '(General)':
             self.abilities[tempAbi.name] = tempAbi
             return(tempAbi.name)
+
+        #
+        # if tempAbi.name in self.permitedAbi:
+        #     self.abilities[tempAbi.name] = tempAbi
+        #     return(tempAbi.name)
+        #
+        # if tempAbi.type in self.permitedAbi:
+        #     self.abilities[tempAbi.name] = tempAbi
+        #     return(tempAbi.name)
+        #
+        # else:
+        #     return tempAbi.name
 
         elif tempAbi.type == '(Academic)':
             if self.hasVirtue('REDCAP') or self.hasVirtue('PRIEST') or self.hasVirtue('MENDICANT FRIAR') or self.hasVirtue('MAGISTER IN ARTIBUS') or self.hasVirtue('FAILED APPRENTICE') or self.hasVirtue('EDUCATED') or self.hasVirtue('CLERK'):
@@ -940,7 +1015,19 @@ class Character():
                 'forms' : self.forms,
                 'formsXP' : self.formsXP,
                 'description': self.description,
-                'type':self.type
+                'type':self.type,
+                'excludedVF':self.excludedVF,
+                'permitedAbi':self.permitedAbi,
+                'excludedAbi':self.excludedAbi,
+                'modifiers':self.modifiers,
+                'botchMod':self.botchMod,
+                'reputations':self.reputations
+# self.excludedVF=[]
+#         self.permitedAbi = []
+#         self.excludedAbi = []
+#         self.modifiers = []
+#         self.botchMod = []
+#         self.reputations = []
 
                 }
 
@@ -1026,6 +1113,13 @@ class Character():
                 self.formsXP = data['formsXP']
                 self.description = data['description']
                 self.type = data['type']
+                self.excludedVF = data['excludedVF']
+                self.permitedAbi = data['permitedAbi']
+                self.excludedAbi = data['excludedAbi']
+                self.modifiers = data['modifiers']
+                self.botchMod = data['botchMod']
+                self.reputations = data['reputations']
+
             except Exception as e:
                 print(e)
                 print('some data not found, character file likely out of date for ' + self.name)
